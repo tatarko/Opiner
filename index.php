@@ -1,23 +1,12 @@
 <?php
 
 // Načítanie triedy jadra
-require_once ('core/core.inc.php');
+include ('opiner/opiner.php');
 
-// Načítanie jadra + konfigurácie
-Opiner::load ('config.inc.php');
+// Spustenie frameworku
+opiner\application::load (__FILE__, 'default');
 
-// Pripojenie k databáze
-Opiner::connect (true);
+// Skompilovanie vystupu
+opiner\application::compile ();
 
-// Načítanie routra
-Opiner::router (Opiner::routerDefault);
-
-// Načítanie motívu
-Opiner::template ('default')
-	-> meta ('subject', 'Opiner Framework')
-	-> value ('siteTitle', 'Opiner Framework')
-	-> title ('Opiner Framework');
-
-// Vygenerovania kompletnej stránky
-Opiner::compile();
 ?>

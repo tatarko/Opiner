@@ -1,55 +1,74 @@
 <?php
 
-// Kontrola jadra
-if (!defined ('_root') or false !== strpos ($_SERVER['PHP_SELF'], '.inc.php'))
-die (header ('HTTP/1.1 403 Forbidden') . 'Unauthorized Access!');
-
+namespace opiner\module;
 
 
 // Trieda template
-class template
+class template extends \opiner\module
 {
 
 	// Základné premmenné motívu
 	protected
 		$name,
-		$fname,
+		$folderName,
 		$root,
 		$view = 'default',
-		$values = array (),
 		$template = '',
-		$meta = array (),
-		$links = array (),
-		$css = array (),
-		$scripts = array (),
-		$tohead = array (),
-		$title = array ();
+		$separator = '&raquo;',
+		$values = [],
+		$meta = [],
+		$links = [],
+		$css = [],
+		$scripts = [],
+		$tohead = [],
+		$title = [];
 	public $remote;
 
 
 
 	/**
-	 *	Vytvorenie objektu, určenie základných premenných
-	 *	@param string name Fyzický názov súboru
+	 *	Startovanie modulu ako volanie z aplikacie
+	 *	@param string name: Nazov fyzickeho priecinka motivu
 	 *	@return object self
 	 */
 
-	public function __construct ($name)
+	 public function startup ()
+	 {
+		 if (!is_array ($this -> _settings)) $this -> load ($this -> _settings);
+		 else $this -> load ($this -> _settings ['name']);
+		 
+		 if (isset ($this -> _settings ['meta']) and is_array ($this -> _settings ['meta']))
+		 $this -> meta = array_merge ($this -> _settings ['meta'], $this -> meta);
+
+		 return $this;
+	 }
+
+
+	/**
+	 *	Vytvorenie objektu, určenie základných premenných
+	 *	@param string name: Fyzický názov súboru
+	 *	@return object self
+	 */
+
+	public function load ($name)
 	{
-		$this -> fname = $name;
-		$this -> root = Opiner::root . Opiner::rootTemplate . $name . '/';
-		$this -> remote = Opiner::rootTemplate . $name . '/';
-		if (!Opiner::isFile ($this -> root . 'config.inc.php'))
-		Opiner::error('Template "' . $this -> fname . '" does not contain its configuration!');
-		if (!Opiner::isFile ($this -> root . $this -> view . '.tpl'))
-		Opiner::error('Template "' . $this -> fname . '" does not contain "' . $this -> view . '" view model!');
-		require_once ($this -> root . 'config.inc.php');
-		$this	-> meta ('generator', Opiner::name . ' ' . Opiner::version)
+		// Nastavenie default hodnot
+		$this -> folderName = $name;
+		$this -> root = \opiner\application::getWebRoot () . 'template/' . $this -> folderName . '/';
+		$this -> remote = \opiner\application::$remote . 'template/' . $this -> folderName . '/assets/';
+		
+		if (!\opiner\application::isFile ($this -> root . 'config.php'))
+		\opiner\application::error ('Template "' . $this -> folderName . '" does not contain its configuration!');
+
+		require_once ($this -> root . 'config.php');
+
+		$this	-> setView ($this -> view)
+			-> meta ('generator', \opiner\name . ' ' . \opiner\version)
 			-> meta ('robots', 'index, follow')
-			-> value ('basehref', Opiner::$remote)
+			-> value ('basehref', \opiner\application::$remote)
 			-> value ('template', $this -> remote)
 			-> value ('template_name', $this -> name)
-			-> value ('remote', Opiner::$remote . $this -> remote);
+			-> value ('remote', $this -> remote);
 		return $this;
 	}
 
@@ -57,15 +76,16 @@ class template
 
 	/**
 	 *	Samotné kompilovanie motívu
-	 *	@param boolean return Spôsob, akým sa má vrátiť výsledok
-	 *	@return object self Ak return === false, motív sa vypíše pomocou echo
-	 *	@return string Ak return !== false, vráti priamo skompilovaný motív
+	 *	@param boolean return: Spôsob, akým sa má vrátiť výsledok
+	 *	@return self: Ak return === false, motív sa vypíše pomocou echo
+	 *	@return string: Ak return !== false, vráti priamo skompilovaný motív
 	 */
 
 	public function compile ($return = false)
 	{
-		$this -> template = file_get_contents ($this -> root . $this -> view . '.tpl');
-		$this -> compileheaders ();
+		if (!isset ($this -> values ['meta'])) $this -> values ['meta'] = $this -> meta;
+		$this -> compileHeaders ();
+		$this -> template = file_get_contents ($this -> root . 'views/' . $this -> view . '.tpl');
 		$this -> template = $this -> parseCycles ($this -> template, $this -> values);
 		$this -> template = $this -> parseValues ($this -> template, $this -> values, true);
 		$this -> template = preg_replace ('#([\n\r]*[ \t]*?)+[\n\r]+#', "\n", $this -> template);
@@ -84,11 +104,11 @@ class template
 	 *	@return object self
 	 */
 
-	protected function compileheaders ()
+	protected function compileHeaders ()
 	{
 		$lines = array (
 			'<base href="' . $this -> value ('basehref') . '" />',
-			'<meta http-equiv="content-type" content="' . Opiner::$headerType . ';charset=utf-8" />'
+			'<meta http-equiv="content-type" content="' . \opiner\application::$headerType . ';charset=' . \opiner\application::$charSet . '" />'
 		);
 		foreach ($this -> meta as $index => $value)
 		$lines[] = '<meta name="' . $index . '" content="' . htmlspecialchars ($value, ENT_COMPAT) . '" />';
@@ -101,8 +121,8 @@ class template
 			$lines [] = $link . ' />';
 		}
 		foreach (array_unique (array_filter ($this -> scripts)) as $value)
-		$lines[] = '<script src="' . $value . '" type="text/javascript" charset="utf-8"></script>';
-		$lines[] = '<title>' . implode (' &raquo; ', $this -> title) . '</title>';
+		$lines[] = '<script src="' . $value . '" type="text/javascript" charset="' . \opiner\application::$charSet . '"></script>';
+		$lines[] = '<title>' . implode (' ' . $this -> separator . ' ', $this -> title) . '</title>';
 		$lines = array_merge ($lines, $this -> tohead);
 		$lines = array_unique (array_filter ($lines));
 		return $this -> value ('headers', ' ' . implode ("\n ", $lines));
@@ -132,7 +152,7 @@ class template
 
 				// Cykly
 			        case 'begin':
-			                $boxes = array ();
+			                $boxes = [];
 			                if (isset ($values [$value]) and is_array ($values [$value]) and !empty ($values [$value]))
 			                {
 			                        $count = count ($values [$value]);
@@ -226,7 +246,7 @@ class template
 		        $pos = $start + 1;
 		        if ($match[1][0] == 'include')
 		        {
-				$replace = Opiner::isFile ($this -> root  . $match[3][0] . '.html') ? file_get_contents ($this -> root  . $match[3][0] . '.html') : '';
+				$replace = \opiner\application::isFile ($this -> root  . 'snippets/' . $match[3][0] . '.tpl') ? file_get_contents ($this -> root  . 'snippets/' . $match[3][0] . '.tpl') : '';
 				if ($replace) $replace = $this -> parseCycles ($replace, $values);
 				$string = str_replace ($match[0][0], $replace, $string);
 			}
@@ -281,8 +301,8 @@ class template
 
 	public function setView ($view)
 	{
-		if (!Opiner::isFile ($this -> root . $view . '.tpl'))
-		Opiner::error('Template "' . $this -> fname . '" does not contain "' . $view . '" view model!');
+		if (!\opiner\application::isFile ($this -> root . 'views/' . $view . '.tpl'))
+		\opiner\application::error ('Template "' . $this -> folderName . '" does not contain "' . $view . '" view model!');
 		$this -> view = $view;
 		return $this;
 	}

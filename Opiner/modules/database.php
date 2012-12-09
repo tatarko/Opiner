@@ -1,15 +1,10 @@
 <?php 
 
-// Kontrola pritomnosti jadra
-if (false !== strpos ($_SERVER['PHP_SELF'], '.inc.php')
-or !defined ('_root'))
-die (header ('HTTP/1.1 403 Forbidden') . 'Unauthorized Access!');
+namespace opiner\module;
 
 
+class database extends \opiner\module {
 
-class database {
-
-	// Konštanty
 	const all = true;
 
 	// Premenné
@@ -23,13 +18,38 @@ class database {
 			$prefix = '';
 
 
+	public function startup ()
+	{
+		if (isset ($this -> _settings ['server'], $this -> _settings ['username'], $this -> _settings ['password'], $this -> _settings ['database']))
+		{
+			if (!$this -> connect ($this -> _settings ['server'], $this -> _settings ['username'], $this -> _settings ['password'], $this -> _settings ['database']))
+			\opiner\application::error ('Connecting to MySQL server or database has failed!');
+
+			if ($this -> _settings ['prefix']) $this -> setPrefix ($this -> _settings ['prefix']);
+
+/*
+			if (is_array (self::$settings ['db'] ['settings']) and count (self::$settings ['db'] ['settings']))
+			foreach ($this -> moduls ['database'] -> select (self::$settings ['db'] ['settings'] [1], self::$settings ['db'] ['settings'] [2]) -> table (self::$settings ['db'] ['settings'] [0]) -> fetch () as $row)
+			$this -> _settings [$row [self::$settings ['db'] ['settings'] [1]]] = $row [self::$settings ['db'] ['settings'] [2]];
+*/
+
+			if ($this -> _settings ['relations'] === true) $this -> mapRelations ();
+		}
+		else \opiner\application::error('Settings does not match enough data for connecting to database!');
+		return $this;
+	}
+
+
+
+
+
 	// Načítanie konfigurácie
 	public function connect ($server, $username, $password, $database = null)
 	{
 		if (false === ($this -> connection = mysql_pconnect ($server, $username, $password)))
-		Opiner::error ('Connection to MySQL server "' . $server . '" has failed!');
+		\opiner\application::error ('Connection to MySQL server "' . $server . '" has failed!');
 		if ($database !== null and !mysql_select_db ($database, $this -> connection))
-		Opiner::error ('Connection to database "' . $database . '" has failed!');
+		\opiner\application::error ('Connection to database "' . $database . '" has failed!');
 		$this -> query ('SET NAMES `utf8` COLLATE `utf8_general_ci`');
 		return true;
 	}
@@ -60,15 +80,15 @@ class database {
 	{
 	        if ($this -> disable !== null)
 		{
-			Opiner::error ($this -> disable . ' | Full Syntax: ' . $string, Opiner::toLog);
+			\opiner\application::error ($this -> disable . ' | Full Syntax: ' . $string, \opiner\application::toLog);
 			return false;
 		}
 		if (false === ($result = mysql_query ($string, $this -> connection)))
 		{
-			Opiner::error (mysql_error() . ' | Full Syntax: ' . $string, Opiner::toLog);
+			\opiner\application::error (mysql_error() . ' | Full Syntax: ' . $string, \opiner\application::toLog);
 			return false;
 		}
-		Opiner::$log [] = $string;
+		$this -> queryLog [] = $string;
 		$this -> segments = array ();
 		$this -> disable = null;
 		return $result;
@@ -128,7 +148,7 @@ class database {
 		if (false === ($query = $this -> select ('key', 'value', 'owner') -> table ('settings') -> send (true)))
 		if (mysql_errno ($this -> connection) == 1146 and $this -> query ('CREATE TABLE `settings` (`key` tinytext NOT NULL, `value` text, `owner` tinytext) ENGINE=MyISAM DEFAULT CHARSET=utf8;'))
 		$query = $this -> select ('key', 'value', 'owner') -> table ('settings') -> send (true);
-		else Opiner::error ('Config table can not be created!');
+		else \opiner\application::error ('Config table can not be created!');
 		while ($row = $this -> result ($query))
 		{
 			if ($row['owner'] == 'php')

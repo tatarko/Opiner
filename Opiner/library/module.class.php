@@ -1,8 +1,8 @@
 <?php
 
-namespace opiner;
+namespace Opiner;
 
-class module {
+class Module {
 
 	protected $_settings = [];
 	

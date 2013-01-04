@@ -1,19 +1,23 @@
 <?php
 
-namespace opiner\module;
+namespace Opiner\Module;
 
 
-class router extends \opiner\module
+
+class Router extends \Opiner\Module
 {
+
+	use \Opiner\Behaviour;
 
 	protected
 		$route, // Špecifický tvar routovania parametrov
 		$complete_url = false, // Generovať adresy vrátanie doménového smerovania
-		$app, // Spustená aplikácia (ktorý súbor volal jadro)
-		$view = 'default', // Ktorý view má byť spustený
-		$indexes = array (), // Aké indexy má router hľadať
-		$active_table = array (), // Ktoré adresy majú byť vyhodnotené ako aktívne
-		$route_table = array (); // Samotná routovacia tabuľka
+		$controller = 'default', // Spustená aplikácia (ktorý súbor volal jadro)
+		$action = 'default', // Ktorý view má byť spustený
+		$view = 'view', // Ktorý view má byť spustený
+		$indexes = [], // Aké indexy má router hľadať
+		$active_table = [], // Ktoré adresy majú byť vyhodnotené ako aktívne
+		$route_table = []; // Samotná routovacia tabuľka
 
 
 
@@ -26,7 +30,23 @@ class router extends \opiner\module
 	 *	@return object self
 	 */
 
-	public function create ($route, $directions = true)
+	public function startup ()
+	{
+		return $this -> run ($this -> _settings [0]);
+	}
+
+
+
+	/*
+	 *	Konštruktor objektu, generovanie routovacej tabuľky,
+	 *	hľadanie paremetrických indexov, načítanie aktívne
+	 *	načítanej adresy stránky
+	 *	@param string route Štruktúta, podľa ktorej má byť web routovaný
+	 *	@param boolean directions Májú byť získané aj aktuálne hodnoty routovania?
+	 *	@return object self
+	 */
+
+	public function run ($route, $directions = true)
 	{
 		$this -> route = $route;
 		$pos = 0;
@@ -40,12 +60,9 @@ class router extends \opiner\module
 				'has-child'  => strpos ($match [5] [0], '{') !== false ? true : false,
 			);
 			$this -> $match [2] [0] = $match [4] [0];
-			if ($match [2] [0] != 'app' and $match [2] [0] != 'view')
 			$this -> indexes [] = $match [2] [0];
                         $pos = $match[0][1] + 1;
 		}
-		$this -> app = substr ($_SERVER['SCRIPT_FILENAME'], strrpos ($_SERVER['SCRIPT_FILENAME'], '/') + 1);
-		$this -> app = substr ($this -> app, 0, strrpos ($this -> app, '.'));
 		if ($directions === true) $this -> getDirections ();
 		return $this;
 	}
@@ -91,17 +108,16 @@ class router extends \opiner\module
 		if (isset ($this -> route_table ['app']) and $this -> route_table ['app'] ['default'] != $this -> app)
 		$route ['app'] = $this -> route_table ['app'] ['wrap-begin'] . $this -> app . $this -> route_table ['app'] ['wrap-end'];
 		$int = 0;
-		$args = func_get_args();
-		if (count ($args) == 1 and is_array ($args [0])) $args = $args [0];
-		foreach ($args as $index => $value)
+
+		foreach (func_get_args() as $index => $value)
 		{
 		        $value = is_array ($value) ? $this -> webalize ($value) : $value;
-			$index = $index == 0 ? 'view' : $this -> indexes [$int++];
-			if (isset ($this -> route_table [$index])) {
+			if (isset ($this -> route_table [$index]))
+			{
 			        $table = $this -> route_table [$index];
 			        $controller = method_exists ($this, $table ['controller']) ? $table ['controller'] : 'controller_encode';
-			        $compare = is_array ($value) ? current ($value) : $value;
-			        if ($table ['default'] != $compare and $compare != '')
+
+			        if ($table ['default'] != $value and $value != '')
 			        {
 					if (isset ($last)) $route [] = $last;
 					$route [$index] = $table ['wrap-begin'] . $this -> $controller ($value) . $table ['wrap-end'];
@@ -139,7 +155,7 @@ class router extends \opiner\module
 	public function completeUrl ($complete = false)
 	{
 		$this -> complete_url = $complete === true ? true : false;
-		$this -> active_table = array ();
+		$this -> active_table = [];
 		$this -> getDirections ();
 		return $this;
 	}
@@ -151,32 +167,23 @@ class router extends \opiner\module
 	 *	@return object self
 	 */
 
-	public function loadView ()
+	public function prepareCompilation ()
 	{
 		// Načítanie súborovej štruktúry pre View
-	        Opiner::isFile(Opiner::root . Opiner::rootView . $this -> view . '.view.inc.php', Opiner::toDie);
-	        Opiner::getClass ('view');
-	        require_once (Opiner::root . Opiner::rootView . $this -> view . '.view.inc.php');
-	        if (!class_exists ('view_' . $this -> view))
-	        Opiner::error('Router has not found "' .  $this -> view . '" view model!');
+		self::requireOnce (\Opiner\root . 'library/controller.class.php');
+		self::requireOnce (self::getWebRoot () . 'private/controllers/' . $this -> controller . '.php');
+		
+		$controllerName = '\\Opiner\\Controller\\' . $this -> controller;
+		if (!class_exists ($controllerName))
+		self::error ('Controller "' . $this -> controller . '" has not been found!');
+		else $this -> controllerObject = new $controllerName;
+		
+		$actionName = 'action' . $this -> action;
+		if (!method_exists ($this -> controllerObject, $actionName))
+		self::error ('Action "' . $this -> action . '" has not been found!');
 
-		// Načítanie triedy daného viewu
-		$class = 'view_' . $this -> view;
-		$this -> viewObject = new $class ();
-		foreach (array ('router', 'template') as $object)
-		if (isset (Opiner::$$object) and Opiner::$$object) $this -> viewObject -> $object = Opiner::$$object;
+		$this -> controllerObject -> $actionName ();
 
-		// Postupné načítania potrebných metód
-		foreach (array ('startup', 'startup_' . $this -> app, 'check', 'check_' . $this -> app, 'prepare', 'prepare_' . $this -> app, 'render', 'render_' . $this -> app) as $method)
-		if (method_exists ($this -> viewObject, $method))
-		{
-			if (false === $this -> viewObject -> $method () and Opiner::$template)
-			{
-				Opiner::$template -> value ('title', 'Error');
-				Opiner::$template -> value ('content', '<p class="error">View "' . $this -> app . '" shouted error in "' . $method . '" method!</p>');
-				return $this;
-			}
-		}
 		return $this;
 	}
 
@@ -229,13 +236,6 @@ class router extends \opiner\module
 			$value = trim ($value, '-');
 			return $value;
 		}
-	}
-
-
-
-	public function goHome ()
-	{
-		Header ('Location: ./');
 	}
 }
 ?>

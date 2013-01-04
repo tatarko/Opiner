@@ -8,8 +8,8 @@
  <div class="row">
   <div class="span12">
    <div class="hero-unit">
-    <h1>{meta/title}</h1>
-    <p>{meta/description}</p>
+    <h1>{site/title}</h1>
+    <p>{site/description}</p>
    </div>
   </div>
  </div>

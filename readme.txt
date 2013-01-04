@@ -19,6 +19,20 @@ správne hodnoty pre korektné pripojenie k MySQL servru a databáze.
 Zoznam zmien
 ------------
 
+Opiner 0.2.1
+Weekly Build #3 [04.01.2013]
+- Prekladovy system je uz plne funkcny.
+- Parsery vstupnych hodnot su izolovane od template triedy.
+- Doladenie Database modulu pre novu strukturu.
+- Opiner\Application nacitava uz aj non-default moduly.
+- Volanie modulov cez Opiner\Application::module($localname).
+- Konfiguraciu aplikacie je mozne teraz uz aj nastavit cez
+Opiner\Application::config($key, $value), vykona sa aj ulozenie do DB.
+- Pri startupe modulu database sa odteraz nacitava konfiguracia z DB.
+- Pridany .htaccess pre zakladne nastavenie modu rewrite.
+- Modul Router a samotne routovanie aplikacie je uz funkcne.
+- Pri pridavani novych premennych do templatu je mozne pouzit aj vnorene vkladanie.
+
 Opiner 0.2
 Weekly Build #2 [09.12.2012]
 - Zmena súborovej štruktúry od základov.
@@ -43,6 +57,5 @@ Roadmap
 
 - Prepísanie triedy na prácu s databázou.
 - Zjednodušenie šablonovacieho systému.
-- Oddelenie parserov vstupných hodnôt od template triedy.
 - Vytvorenie rozhrania na prácu s formulármi.
 - Vytvorenie rozhrania pre ľahkú správu menu.

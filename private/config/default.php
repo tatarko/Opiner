@@ -1,36 +1,39 @@
 <?php 
 
-// PHP konfigurácia
-#ini_set ('error_log', Opiner::root . '/cache/erros.log');
-#ini_set ('error_reporting', E_ALL);
-#ini_set ('display_errors', E_ALL);
-
-return array (
+return [
 
 	// Prihlasovacie údaje k databáze
-	'database' => array (
+	'database' => [
 		'server'	=> 'localhost',
 		'username'	=> 'root',
 		'password'	=> 'root',
 		'database'	=> 'test',
 		'prefix'	=> 'prefix',
-		'settings'	=> array ('settings', 'key', 'value'),
+		'settings'	=> ['settings', 'key', 'value'],
 		'relations'	=> true,
-	),
+	],
 
 	// Vsetko ostatne
-	'template'	=> array (
-		'name'		=> 'default',
-		'meta'		=> array (
+	'template' => [
+		'default',
+		'meta'		=> [
 			'title'		=> 'Opiner Framework',
 			'description'	=> 'Open Source PHP Framework for Everybody',
 			'keywords'	=> 'open, source, php, framework',
-		),
-		'links'		=> array ('remote/css/default.css'),
-	),
-	'language'	=> 'slovak',
-	'router'	=> '{?$controller:string:site${=$action:string:default${&$param:int:5$}}}',
-//	'router'	=> '{$app:index$/}{$view:string:default$/{$primary$/{$secondary:int:5$/}}}',
+		],
+		'links'		=> ['remote/css/default.css'],
+	],
 
-);
+	'language' => 'slovak',
+
+	'router'	=> '{$controller:string:site$/{$action:string:default$/}}{$primary:int:0$/{$secondary:int:0$/}}',
+
+/*
+	'modules'	=> [
+		['mailtemp', 'template', 'mail'],
+		// Pod akym menom bude modul dostupny, O aky druh modulu ide, konfiguracia modulu
+	],
+*/
+];
+
 ?>

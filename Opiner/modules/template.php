@@ -1,11 +1,17 @@
 <?php
 
-namespace opiner\module;
+// Definovanie mennej triedy
+namespace Opiner\Module;
 
+// Nacitavanie potrebnych funkcii
+\Opiner\Application::requireOnce (\Opiner\root . 'library/parser.lib.php');
 
 // Trieda template
-class template extends \opiner\module
+class Template extends \Opiner\Module
 {
+
+	// Nacitanie traitov
+	use \Opiner\Behaviour;
 
 	// Základné premmenné motívu
 	protected
@@ -28,20 +34,20 @@ class template extends \opiner\module
 
 	/**
 	 *	Startovanie modulu ako volanie z aplikacie
-	 *	@param string name: Nazov fyzickeho priecinka motivu
 	 *	@return object self
 	 */
 
-	 public function startup ()
-	 {
-		 if (!is_array ($this -> _settings)) $this -> load ($this -> _settings);
-		 else $this -> load ($this -> _settings ['name']);
-		 
-		 if (isset ($this -> _settings ['meta']) and is_array ($this -> _settings ['meta']))
-		 $this -> meta = array_merge ($this -> _settings ['meta'], $this -> meta);
-
-		 return $this;
-	 }
+	public function startup ()
+	{
+		$this -> load ($this -> _settings [0]);
+		if (isset ($this -> _settings ['meta']) and is_array ($this -> _settings ['meta']))
+		foreach ($this -> _settings ['meta'] as $index => $value)
+		{
+			$this -> meta ($index, $value);
+			$this -> values ['site'] [$index] = $value;
+		}
+		return $this;
+	}
 
 
 	/**
@@ -54,21 +60,23 @@ class template extends \opiner\module
 	{
 		// Nastavenie default hodnot
 		$this -> folderName = $name;
-		$this -> root = \opiner\application::getWebRoot () . 'template/' . $this -> folderName . '/';
-		$this -> remote = \opiner\application::$remote . 'template/' . $this -> folderName . '/assets/';
-		
-		if (!\opiner\application::isFile ($this -> root . 'config.php'))
-		\opiner\application::error ('Template "' . $this -> folderName . '" does not contain its configuration!');
+		$this -> root = self::getWebRoot () . 'template/' . $this -> folderName . '/';
+		$this -> remote = self::getWebRemote () . 'template/' . $this -> folderName . '/assets/';
 
+		// Nacitanie konfiguracie motivu
+		if (!self::isFile ($this -> root . 'config.php'))
+		self::error ('Template "' . $this -> folderName . '" does not contain its configuration!');
 		require_once ($this -> root . 'config.php');
 
+		// Nasadenie zakladnych hodnot do templatu
 		$this	-> setView ($this -> view)
-			-> meta ('generator', \opiner\name . ' ' . \opiner\version)
+			-> meta ('generator', \Opiner\name . ' ' . \Opiner\version)
 			-> meta ('robots', 'index, follow')
-			-> value ('basehref', \opiner\application::$remote)
+			-> value ('basehref', self::getWebRemote ())
 			-> value ('template', $this -> remote)
 			-> value ('template_name', $this -> name)
-			-> value ('remote', $this -> remote);
+			-> value ('remote', $this -> remote)
+			-> value ('site/powered', 'Powered by <a href="' . \Opiner\url . '">' . \Opiner\name . '</a>');
 		return $this;
 	}
 
@@ -83,7 +91,6 @@ class template extends \opiner\module
 
 	public function compile ($return = false)
 	{
-		if (!isset ($this -> values ['meta'])) $this -> values ['meta'] = $this -> meta;
 		$this -> compileHeaders ();
 		$this -> template = file_get_contents ($this -> root . 'views/' . $this -> view . '.tpl');
 		$this -> template = $this -> parseCycles ($this -> template, $this -> values);
@@ -100,7 +107,7 @@ class template extends \opiner\module
 
 
 	/**
-	 *	Kompilovanie html hlavičky do premennej TEMPLATE_HEADER
+	 *	Kompilovanie html hlavičky do premennej
 	 *	@return object self
 	 */
 
@@ -108,7 +115,7 @@ class template extends \opiner\module
 	{
 		$lines = array (
 			'<base href="' . $this -> value ('basehref') . '" />',
-			'<meta http-equiv="content-type" content="' . \opiner\application::$headerType . ';charset=' . \opiner\application::$charSet . '" />'
+			'<meta http-equiv="content-type" content="' . \Opiner\Application::$headerType . ';charset=' . \Opiner\Application::$charSet . '" />'
 		);
 		foreach ($this -> meta as $index => $value)
 		$lines[] = '<meta name="' . $index . '" content="' . htmlspecialchars ($value, ENT_COMPAT) . '" />';
@@ -121,7 +128,7 @@ class template extends \opiner\module
 			$lines [] = $link . ' />';
 		}
 		foreach (array_unique (array_filter ($this -> scripts)) as $value)
-		$lines[] = '<script src="' . $value . '" type="text/javascript" charset="' . \opiner\application::$charSet . '"></script>';
+		$lines[] = '<script src="' . $value . '" type="text/javascript" charset="' . \Opiner\Application::$charSet . '"></script>';
 		$lines[] = '<title>' . implode (' ' . $this -> separator . ' ', $this -> title) . '</title>';
 		$lines = array_merge ($lines, $this -> tohead);
 		$lines = array_unique (array_filter ($lines));
@@ -246,7 +253,7 @@ class template extends \opiner\module
 		        $pos = $start + 1;
 		        if ($match[1][0] == 'include')
 		        {
-				$replace = \opiner\application::isFile ($this -> root  . 'snippets/' . $match[3][0] . '.tpl') ? file_get_contents ($this -> root  . 'snippets/' . $match[3][0] . '.tpl') : '';
+				$replace = self::isFile ($this -> root  . 'snippets/' . $match[3][0] . '.tpl') ? file_get_contents ($this -> root  . 'snippets/' . $match[3][0] . '.tpl') : '';
 				if ($replace) $replace = $this -> parseCycles ($replace, $values);
 				$string = str_replace ($match[0][0], $replace, $string);
 			}
@@ -259,12 +266,7 @@ class template extends \opiner\module
 				$string = str_replace ($match[0][0], htmlspecialchars($value) , $string);
 				else if ($match [3] [0] == 'html')
 				$string = str_replace ($match[0][0], $value, $string);
-				else if (method_exists ($this, 'parser_' . $match[3][0]))
-				{
-				        $method = 'parser_' . $match[3][0];
-					$string = str_replace ($match[0][0], $this -> $method ($value, (isset ($match[5][0]) ? $match[5][0] : null)), $string);
-				}
-				else $string = str_replace ($match[0][0], '', $string);
+				else $string = str_replace ($match[0][0], \Opiner\Parser\call ($match [3] [0], $value, isset ($match[5][0]) ? $match[5][0] : null), $string);
 			}
 			elseif ($clear)
 			$string = str_replace ($match[0][0], '', $string);
@@ -286,7 +288,7 @@ class template extends \opiner\module
 	        if ($value === null and isset ($this -> values [$key]) and !is_array ($this -> values [$key])) return $this -> values [$key];
 	        else if ($value === null) return '';
 	        else if (is_array ($value)) $this -> values [$key] [] = $value;
-		else $this -> values [$key] = $value;
+		else eval ('$this -> values [\'' . implode ('\'][\'', explode ('/', $key)) . '\'] = ' . var_export ($value, true) . ';');
 		return $this;
 	}
 
@@ -301,8 +303,8 @@ class template extends \opiner\module
 
 	public function setView ($view)
 	{
-		if (!\opiner\application::isFile ($this -> root . 'views/' . $view . '.tpl'))
-		\opiner\application::error ('Template "' . $this -> folderName . '" does not contain "' . $view . '" view model!');
+		if (!self::isFile ($this -> root . 'views/' . $view . '.tpl'))
+		self::error ('Template "' . $this -> folderName . '" does not contain "' . $view . '" view model!');
 		$this -> view = $view;
 		return $this;
 	}
@@ -358,7 +360,7 @@ class template extends \opiner\module
 	/**
 	 *	Nastavenie dát pre meta hlavičky
 	 *	Ak hodnota $value === null, tak
-	 *	dochádza k odstráneniu informácií s meta hlavičiek
+	 *	dochádza k odstráneniu informácií z meta hlavičiek
 	 *	@param string index Názov/Typ údaja
 	 *	@param string value Hodnota premennej
 	 *	@return object self
@@ -403,32 +405,6 @@ class template extends \opiner\module
 	        if ($key > 0) $array [$keys [$key]] = $value;
 		$this -> links [$rel] = $array;
 		return $this;
-	}
-
-
-
-	/**
-	 *	Pridávanie segmentov hlavičky
-	 *	@param string segment Samotný segment
-	 *	@return object self
-	 */
-
-	public function parser_date ($value, $format = '%d.%m.%Y')
-	{
-		return strftime ($format, $value);
-	}
-
-
-
-	/**
-	 *	Pridávanie segmentov hlavičky
-	 *	@param string segment Samotný segment
-	 *	@return object self
-	 */
-
-	public function parser_url ($value)
-	{
-		return '<a href="' . $value . '">' . $value . '</a>';
 	}
 }
 ?>

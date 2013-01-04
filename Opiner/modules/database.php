@@ -1,61 +1,77 @@
 <?php 
 
-namespace opiner\module;
+namespace Opiner\Module;
 
 
-class database extends \opiner\module {
 
-	const all = true;
+class Database extends \Opiner\Module {
 
-	// Premenné
-	protected	$all = '*',
-			$comma = ', ',
-			$wrap = '`~`',
-			$set = '(~)',
-			$connection,
+	use \Opiner\Behaviour;
+
+	const	all = true,
+		whole = '*',
+		comma = ', ',
+		wrap = '`~`';
+	
+	protected	$connection,
 			$segments = array (),
 			$disable = null,
 			$prefix = '';
 
 
+
+	/* Startovanie modulu ako volanie z aplikacie
+	 * @return object self */
+
 	public function startup ()
 	{
-		if (isset ($this -> _settings ['server'], $this -> _settings ['username'], $this -> _settings ['password'], $this -> _settings ['database']))
+		if (!isset ($this -> _settings ['server'], $this -> _settings ['username'], $this -> _settings ['password'], $this -> _settings ['database']))
+		self::error ('Settings does not match enough data for connecting to database!');
+
+		if (!$this -> connect ($this -> _settings ['server'], $this -> _settings ['username'], $this -> _settings ['password'], $this -> _settings ['database']))
+		self::error ('Connecting to MySQL server or database has failed!');
+
+		if ($this -> _settings ['prefix'])
+		$this -> setPrefix ($this -> _settings ['prefix']);
+
+		if (is_array ($this -> _settings ['settings']) and count ($this -> _settings ['settings']) == 3)
 		{
-			if (!$this -> connect ($this -> _settings ['server'], $this -> _settings ['username'], $this -> _settings ['password'], $this -> _settings ['database']))
-			\opiner\application::error ('Connecting to MySQL server or database has failed!');
-
-			if ($this -> _settings ['prefix']) $this -> setPrefix ($this -> _settings ['prefix']);
-
-/*
-			if (is_array (self::$settings ['db'] ['settings']) and count (self::$settings ['db'] ['settings']))
-			foreach ($this -> moduls ['database'] -> select (self::$settings ['db'] ['settings'] [1], self::$settings ['db'] ['settings'] [2]) -> table (self::$settings ['db'] ['settings'] [0]) -> fetch () as $row)
-			$this -> _settings [$row [self::$settings ['db'] ['settings'] [1]]] = $row [self::$settings ['db'] ['settings'] [2]];
-*/
-
-			if ($this -> _settings ['relations'] === true) $this -> mapRelations ();
+			$data = $this -> select ($this -> _settings ['settings'] [1], $this -> _settings ['settings'] [2]) -> table ($this -> _settings ['settings'] [0]) -> fetch ();
+			if ($data)
+			foreach ($data as $row)
+			\Opiner\Application::config ($row [$this -> _settings ['settings'] [1]], $row [$this -> _settings ['settings'] [2]], false);
 		}
-		else \opiner\application::error('Settings does not match enough data for connecting to database!');
+
+		if ($this -> _settings ['relations'] === true)
+		$this -> mapRelations ();
+
 		return $this;
 	}
 
 
 
+	/* Funkcia na pripojenie k mysql servru a databaze
+	 * @param string $server: Adresa MySQL servra ku ktoremu sa chceme pripojit
+	 * @param string $username: Meno pouzivatela, pod ktorym sa chceme prihlasit
+	 * @param string $password: Heslo pouzivatela, pod ktorym sa chceme prihlasit
+	 * @param string $database: Databaza, z ktorej budeme cerpat udaje
+	 * @return object boolean */
 
-
-	// Načítanie konfigurácie
 	public function connect ($server, $username, $password, $database = null)
 	{
 		if (false === ($this -> connection = mysql_pconnect ($server, $username, $password)))
-		\opiner\application::error ('Connection to MySQL server "' . $server . '" has failed!');
+		self::error ('Connection to MySQL server "' . $server . '" has failed!');
 		if ($database !== null and !mysql_select_db ($database, $this -> connection))
-		\opiner\application::error ('Connection to database "' . $database . '" has failed!');
+		self::error ('Connection to database "' . $database . '" has failed!');
 		$this -> query ('SET NAMES `utf8` COLLATE `utf8_general_ci`');
 		return true;
 	}
 
 
-	// Zmapuje suvislosti medzi tabulkami
+
+	/* Mapovanie vztahov medzi tabulkami v databaze
+	 * @return self */
+
 	public function mapRelations ()
 	{
 		$sql = mysql_query ('SHOW TABLES' . (($this -> prefix == '' ? '': ' LIKE "' . $this -> prefix . '%"')), $this -> connection);
@@ -75,47 +91,68 @@ class database extends \opiner\module {
 	}
 
 
-	// Posielanie Query na databázu
+
+	/* Odosielanie SQL prikazu
+	 * @param string $string: Samotna SQL quera volana na db
+	 * @return boolean/array */
+
 	protected function query ($string)
 	{
+		\Opiner\Application::$log ['database'] [] = $string;
 	        if ($this -> disable !== null)
 		{
-			\opiner\application::error ($this -> disable . ' | Full Syntax: ' . $string, \opiner\application::toLog);
+			self::error ($this -> disable . ' | Full Syntax: ' . $string, \Opiner\toLog);
 			return false;
 		}
 		if (false === ($result = mysql_query ($string, $this -> connection)))
 		{
-			\opiner\application::error (mysql_error() . ' | Full Syntax: ' . $string, \opiner\application::toLog);
+			self::error (mysql_error(), \Opiner\toLog);
 			return false;
 		}
-		$this -> queryLog [] = $string;
 		$this -> segments = array ();
 		$this -> disable = null;
 		return $result;
 	}
 
 
-	// Posielanie Query na databázu
+
+	/* Pri opakovanom vybere dat v ramci jeden query, vracia jednotlive riadky
+	 * @param pointer $query: Odkaz na query, z ktorej tahame riadky
+	 * @return boolean/array */
+
 	protected function result ($query)
 	{
 		return mysql_fetch_assoc ($query);
 	}
 
-	// Príkaz SELECT
-	public function select ($first = database::all)
+
+
+	/* Generovanie SELECT statement-u pri SQL prikazoch
+	 * @param mixed $first: Prvy zo stlpcov, ktore sa maju tahat
+	 * @return self */
+
+	public function select ($first = self::all)
 	{
-		if (database::all !== $first)
+		if (self::all !== $first)
 		{
 			if (!is_array ($first))
 			$first = func_get_args ();
 			foreach ($first as $name) $segments[] = $this -> getWrap ($name);
-			$this -> segments [] = 'SELECT ' . implode ($this -> comma, $segments);
+			$this -> segments [] = 'SELECT ' . implode (self::comma, $segments);
 		}
-		else $this -> segments [] = 'SELECT ' . $this -> all;
+		else $this -> segments [] = 'SELECT ' . self::whole;
 		return $this;
 	}
 
-	// Výber tabuľky
+
+
+	/* Funkcia na pripojenie k mysql servru a databaze
+	 * @param string server: Adresa MySQL servra ku ktoremu sa chceme pripojit
+	 * @param string username: Meno pouzivatela, pod ktorym sa chceme prihlasit
+	 * @param string password: Heslo pouzivatela, pod ktorym sa chceme prihlasit
+	 * @param string database: Databaza, z ktorej budeme cerpat udaje
+	 * @return object boolean */
+
 	public function table ()
 	{
 		$tables = func_get_args();
@@ -125,10 +162,10 @@ class database extends \opiner\module {
 		$i = 96;
 		foreach ($tables as $name)
 		{
-			$segments[] = count ($tables) > 1 ? $this -> getWrap ($this -> prefix . $name) . ' as ' . $this -> getWrap ('table_' . chr(++$i)) : str_replace ('~', $this -> prefix . $name, $this -> wrap);
+			$segments[] = count ($tables) > 1 ? $this -> getWrap ($this -> prefix . $name) . ' as ' . $this -> getWrap ('table_' . chr(++$i)) : str_replace ('~', $this -> prefix . $name, self::wrap);
 			$this -> tablelog [] = $name;
 		}
-		$this -> segments [] = 'FROM ' . implode ($this -> comma, $segments);
+		$this -> segments [] = 'FROM ' . implode (self::comma, $segments);
 		return $this;
 	}
 
@@ -139,23 +176,6 @@ class database extends \opiner\module {
 		return $this -> query (implode (' ', $this -> segments));
 		$this -> result = $this -> query (implode (' ', $this -> segments));
 		return $this;
-	}
-
-
-	// Načítanie konfigurácie
-	public function config ()
-	{
-		if (false === ($query = $this -> select ('key', 'value', 'owner') -> table ('settings') -> send (true)))
-		if (mysql_errno ($this -> connection) == 1146 and $this -> query ('CREATE TABLE `settings` (`key` tinytext NOT NULL, `value` text, `owner` tinytext) ENGINE=MyISAM DEFAULT CHARSET=utf8;'))
-		$query = $this -> select ('key', 'value', 'owner') -> table ('settings') -> send (true);
-		else \opiner\application::error ('Config table can not be created!');
-		while ($row = $this -> result ($query))
-		{
-			if ($row['owner'] == 'php')
-			ini_set ($row['key'], $row['value']);
-			else $return[$row['key']] = $row['value'];
-		}
-		return isset ($return) ? $return : array();
 	}
 
 
@@ -328,7 +348,7 @@ class database extends \opiner\module {
 	        {
 	                if (strlen ($index[0]) == 1)
 			$index [0] = 'table_' . chr (ord (intval ($index[0])) + 48);
-	                return str_replace ('~', $index [0], $this -> wrap) . '.' . $this -> parseValue ($index [1]);
+	                return str_replace ('~', $index [0], self::wrap) . '.' . $this -> parseValue ($index [1]);
 		}
 		return $this -> parseValue ($index [0]);
 	}
@@ -337,7 +357,7 @@ class database extends \opiner\module {
 	protected function parseValue ($index)
 	{
 		$index = explode ('#', $index);
-	        if (count ($index) == 3 and $index[1] == 'sql') return $index[0] . ' as ' . str_replace ('~', $index[2], $this -> wrap);
+	        if (count ($index) == 3 and $index[1] == 'sql') return $index[0] . ' as ' . str_replace ('~', $index[2], self::wrap);
 	        if (count ($index) == 2 and $index[1] == 'sql') return $index[0];
 	        return $this -> rename ($index [0]);
 	}
@@ -347,9 +367,9 @@ class database extends \opiner\module {
 	{
 		if (preg_match('#([a-z]+)\[([a-z]*?)\]#', $index, $match))
 		{
-			return str_replace ('~', $match[1], $this -> wrap) . ' as ' . str_replace ('~', $match[2], $this -> wrap);
+			return str_replace ('~', $match[1], self::wrap) . ' as ' . str_replace ('~', $match[2], self::wrap);
 		}
-		else return str_replace ('~', $index, $this -> wrap);
+		else return str_replace ('~', $index, self::wrap);
 	}
 
 	// Pridanie prefixu
@@ -429,6 +449,17 @@ class database extends \opiner\module {
 		}
 		return $result;
 	}
+
+
+
+	/* Po skonceni kompilovania stranky sa pekne krasne odpojime
+	 * @return self */
+
+	 public function afterCompilation ()
+	 {
+		 mysql_close ($this -> connection);
+	 }
+
 }
 
 ?>

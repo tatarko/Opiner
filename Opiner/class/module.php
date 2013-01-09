@@ -2,11 +2,13 @@
 
 namespace Opiner;
 
-class Module {
+abstract class Module {
+
+	use Behavior;
 
 	protected $_settings = [];
 	
-	public function __construct ($settings)
+	public function __construct ($settings = null)
 	{
 		if ($settings === null) return $this;
 		$this -> _settings = $settings;

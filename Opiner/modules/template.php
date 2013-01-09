@@ -4,14 +4,11 @@
 namespace Opiner\Module;
 
 // Nacitavanie potrebnych funkcii
-\Opiner\Application::requireOnce (\Opiner\root . 'library/parser.lib.php');
+\Opiner\Application::getFile (\Opiner\root . 'library/parser.php');
 
 // Trieda template
 class Template extends \Opiner\Module
 {
-
-	// Nacitanie traitov
-	use \Opiner\Behaviour;
 
 	// Základné premmenné motívu
 	protected
@@ -39,13 +36,15 @@ class Template extends \Opiner\Module
 
 	public function startup ()
 	{
-		$this -> load ($this -> _settings [0]);
+		$template = is_array ($this -> _settings) ? $this -> _settings [0] : $this -> _settings;
+		$this -> load ($template);
 		if (isset ($this -> _settings ['meta']) and is_array ($this -> _settings ['meta']))
 		foreach ($this -> _settings ['meta'] as $index => $value)
 		{
 			$this -> meta ($index, $value);
 			$this -> values ['site'] [$index] = $value;
 		}
+		unset ($this -> _settings);
 		return $this;
 	}
 
@@ -60,22 +59,23 @@ class Template extends \Opiner\Module
 	{
 		// Nastavenie default hodnot
 		$this -> folderName = $name;
-		$this -> root = self::getWebRoot () . 'template/' . $this -> folderName . '/';
-		$this -> remote = self::getWebRemote () . 'template/' . $this -> folderName . '/assets/';
+		$this -> root = \Opiner\web . 'template/' . $this -> folderName . '/';
+		$this -> remote = \Opiner\remote . 'template/' . $this -> folderName . '/assets/';
 
 		// Nacitanie konfiguracie motivu
 		if (!self::isFile ($this -> root . 'config.php'))
-		self::error ('Template "' . $this -> folderName . '" does not contain its configuration!');
+		throw new \Opiner\Exception ($name . '|' . $this -> root . 'config.php', 200);
 		require_once ($this -> root . 'config.php');
 
 		// Nasadenie zakladnych hodnot do templatu
-		$this	-> setView ($this -> view)
+		$this
+			-> setView ($this -> view)
 			-> meta ('generator', \Opiner\name . ' ' . \Opiner\version)
 			-> meta ('robots', 'index, follow')
-			-> value ('basehref', self::getWebRemote ())
-			-> value ('template', $this -> remote)
-			-> value ('template_name', $this -> name)
-			-> value ('remote', $this -> remote)
+			-> value ('basehref', \Opiner\remote)
+			-> value ('template/remote', $this -> remote)
+			-> value ('template/name', $this -> name)
+			-> value ('site/remote', \Opiner\remote)
 			-> value ('site/powered', 'Powered by <a href="' . \Opiner\url . '">' . \Opiner\name . '</a>');
 		return $this;
 	}
@@ -123,7 +123,7 @@ class Template extends \Opiner\Module
 		$lines[] = '<link rel="stylesheet" href="' . $value . '" type="text/css" />';
 		foreach ($this -> links as $type => $array)
 		{
-		        $link = '<link rel="' . $type . '"';
+			$link = '<link rel="' . $type . '"';
 			foreach ($array as $key => $value) $link .= ' ' . $key . '="' . $value . '"';
 			$lines [] = $link . ' />';
 		}
@@ -146,23 +146,24 @@ class Template extends \Opiner\Module
 	{
 		while (preg_match ('#<!-- (begin|if) ([a-z_]+)([a-zA-Z0-9_\# ]*?) -->(.+?)<!-- end \\2 -->#ism', $string, $match, PREG_OFFSET_CAPTURE))
 		{
-		        $index = 0;
-		        $mode = $match[1][0];
-		        $value = $match[2][0];
-		        $content = $match[4][0];
-		        $start = $match[0][1];
-		        $end = $start + strlen ($match[0][0]);
+			$index = 0;
+			$mode = $match[1][0];
+			$value = $match[2][0];
+			$content = $match[4][0];
+			$start = $match[0][1];
+			$end = $start + strlen ($match[0][0]);
+
 			switch ($mode)
 			{
 
 
 
 				// Cykly
-			        case 'begin':
-			                $boxes = [];
-			                if (isset ($values [$value]) and is_array ($values [$value]) and !empty ($values [$value]))
-			                {
-			                        $count = count ($values [$value]);
+				case 'begin':
+					$boxes = [];
+					if (isset ($values [$value]) and is_array ($values [$value]) and !empty ($values [$value]))
+					{
+						$count = count ($values [$value]);
 						foreach ($values [$value] as $array)
 						{
 							$array = array_merge ($array, array (
@@ -187,9 +188,10 @@ class Template extends \Opiner\Module
 
 				// Podmienky
 				case 'if':
-				        $start = $match[0][1];
-				        $end = $start + strlen ($match[0][0]);
+					$start = $match[0][1];
+					$end = $start + strlen ($match[0][0]);
 					$array = array_merge (array ('elseif', $match[2][0] . $match[3][0]), preg_split ('#<!-- (elseif|else) ' . $value . ' ([a-zA-Z0-9_\# ]*?)-->#ism', $content, -1, PREG_SPLIT_DELIM_CAPTURE));
+
 					for ($i = 1; $i < count ($array); $i += 3)
 					{
 						if ($array[($i-1)] == 'elseif' and $this -> parseCond ($array[$i], $values))
@@ -207,7 +209,7 @@ class Template extends \Opiner\Module
 				break;
 
 				default: $string = substr ($string, 0, $start) . substr ($string, $end); break;
-			};
+			}
 		}
 		return $string;
 	}
@@ -226,8 +228,8 @@ class Template extends \Opiner\Module
 		if (count ($words) == 1) return true;
 		if (count ($words) == 3)
 		{
-		        if (substr ($words[2], 0, 1) == '#' and !isset ($values [substr ($words[2], 1)])) return false;
-		        $compare = substr ($words[2], 0, 1) == '#' ? $values [substr ($words[2], 1)] : $words[2];
+			if (substr ($words[2], 0, 1) == '#' and !isset ($values [substr ($words[2], 1)])) return false;
+			$compare = substr ($words[2], 0, 1) == '#' ? $values [substr ($words[2], 1)] : $words[2];
 			if ($words[1] == 'equals' and $values [$words[0]] == $compare) return true;
 			else if ($words[1] == 'over' and $values [$words[0]] > $compare) return true;
 			else if ($words[1] == 'under' and $values [$words[0]] < $compare) return true;
@@ -248,18 +250,19 @@ class Template extends \Opiner\Module
 		$pos = 0;
 		while (preg_match ('#{([a-z_/]+)(\:([a-z_]+))?(\:(.[^{}]+))?}#ism', $string, $match, PREG_OFFSET_CAPTURE, $pos))
 		{
-		        $start = $match[0][1];
-		        $end = $start + strlen ($match[0][0]);
-		        $pos = $start + 1;
-		        if ($match[1][0] == 'include')
-		        {
+			$start = $match[0][1];
+			$end = $start + strlen ($match[0][0]);
+			$pos = $start + 1;
+
+			if ($match[1][0] == 'include')
+			{
 				$replace = self::isFile ($this -> root  . 'snippets/' . $match[3][0] . '.tpl') ? file_get_contents ($this -> root  . 'snippets/' . $match[3][0] . '.tpl') : '';
 				if ($replace) $replace = $this -> parseCycles ($replace, $values);
 				$string = str_replace ($match[0][0], $replace, $string);
 			}
-		        elseif (isset ($values [current (explode ('/', $match[1][0]))]))
-		        {
-		        	$value = $values;
+			elseif (isset ($values [current (explode ('/', $match[1][0]))]))
+			{
+				$value = $values;
 				foreach (explode ('/', $match[1][0]) as $yeah)
 				$value = $value [$yeah];
 				if (count ($match) == 2)
@@ -285,10 +288,25 @@ class Template extends \Opiner\Module
 
 	public function value ($key, $value = null)
 	{
-	        if ($value === null and isset ($this -> values [$key]) and !is_array ($this -> values [$key])) return $this -> values [$key];
-	        else if ($value === null) return '';
-	        else if (is_array ($value)) $this -> values [$key] [] = $value;
+		if ($value === null and isset ($this -> values [$key]) and !is_array ($this -> values [$key])) return $this -> values [$key];
+		else if ($value === null) return '';
+		else if (is_array ($value)) eval ('$this -> values [\'' . implode ('\'][\'', explode ('/', $key)) . '\'] [] = ' . var_export ($value, true) . ';');
 		else eval ('$this -> values [\'' . implode ('\'][\'', explode ('/', $key)) . '\'] = ' . var_export ($value, true) . ';');
+		return $this;
+	}
+
+
+
+	/**
+	 *	Pridanie premennych od menu generatora
+	 *	@param string $name: Unikatny nazov menu
+	 *	@param array $data: Samotne data potrebne na vykreslenie menu
+	 *	@return object self
+	 */
+
+	public function addMenu ($name, $data)
+	{
+		$this -> values ['menu'] [$name] = $data;
 		return $this;
 	}
 
@@ -304,7 +322,7 @@ class Template extends \Opiner\Module
 	public function setView ($view)
 	{
 		if (!self::isFile ($this -> root . 'views/' . $view . '.tpl'))
-		self::error ('Template "' . $this -> folderName . '" does not contain "' . $view . '" view model!');
+		throw new \Opiner\Exception ($view . '|' . $this -> folderName . '|' . $this -> root . 'views/' . $view . '.tpl', 201);
 		$this -> view = $view;
 		return $this;
 	}
@@ -350,7 +368,7 @@ class Template extends \Opiner\Module
 
 	public function title ($title, $clear = false)
 	{
-	        if ($clear === true) $this -> title = array ($title);
+		if ($clear === true) $this -> title = array ($title);
 		else $this -> title [] = $title;
 		return $this;
 	}
@@ -400,9 +418,9 @@ class Template extends \Opiner\Module
 
 	public function addLink ($rel, $href)
 	{
-	        $keys = array ('rel', 'href', 'type', 'title');
-	        foreach (func_get_args() as $key => $value)
-	        if ($key > 0) $array [$keys [$key]] = $value;
+		$keys = array ('rel', 'href', 'type', 'title');
+		foreach (func_get_args() as $key => $value)
+		if ($key > 0) $array [$keys [$key]] = $value;
 		$this -> links [$rel] = $array;
 		return $this;
 	}

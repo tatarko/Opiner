@@ -1,12 +1,9 @@
 <?php
 
 // Načítanie triedy jadra
-include ('Opiner/Opiner.php');
-
-// Spustenie frameworku
-Opiner\Application::load (__FILE__, 'default');
+include ('Opiner/opiner.php');
 
 // Skompilovanie vystupu
-Opiner\Application::compile ();
+Opiner\Application::compile (__FILE__, 'default');
 
 ?>

@@ -2,22 +2,18 @@
 
 namespace Opiner\Module;
 
-
-
 class Router extends \Opiner\Module
 {
 
-	use \Opiner\Behaviour;
-
 	protected
-		$route, // Špecifický tvar routovania parametrov
-		$complete_url = false, // Generovať adresy vrátanie doménového smerovania
-		$controller = 'default', // Spustená aplikácia (ktorý súbor volal jadro)
-		$action = 'default', // Ktorý view má byť spustený
-		$view = 'view', // Ktorý view má byť spustený
-		$indexes = [], // Aké indexy má router hľadať
-		$active_table = [], // Ktoré adresy majú byť vyhodnotené ako aktívne
-		$route_table = []; // Samotná routovacia tabuľka
+		$route,
+		$complete_url = false,
+		$controller = 'default',
+		$action = 'default',
+		$view = 'default',
+		$indexes = [],
+		$active_table = [],
+		$route_table = [];
 
 
 
@@ -32,7 +28,10 @@ class Router extends \Opiner\Module
 
 	public function startup ()
 	{
-		return $this -> run ($this -> _settings [0]);
+		$route = is_array ($this -> _settings) ? $this -> _settings [0] : $this -> _settings; 
+		$this -> run ($route);
+		unset ($this -> _settings);
+		return $this;
 	}
 
 
@@ -50,7 +49,7 @@ class Router extends \Opiner\Module
 	{
 		$this -> route = $route;
 		$pos = 0;
-		while (preg_match ('#\{(.*?)\$([a-z0-9]+)\:?([a-z]*?)\:?([a-z0-9-_]*?)\$(.*?)\}#m', $this -> route, $match, PREG_OFFSET_CAPTURE, $pos))
+		while (preg_match ('#\{(.*?)\$([a-z0-9]+)\:?([a-z]*?)\:?([a-z0-9-_]*?)\$(.*?)\}#m', $route, $match, PREG_OFFSET_CAPTURE, $pos))
 		{
 			$this -> route_table [$match [2] [0]] = array (
 				'wrap-begin' => $match [1] [0],
@@ -61,7 +60,7 @@ class Router extends \Opiner\Module
 			);
 			$this -> $match [2] [0] = $match [4] [0];
 			$this -> indexes [] = $match [2] [0];
-                        $pos = $match[0][1] + 1;
+                        $pos = $this -> route_table [$match [2] [0]] ['has-child'] ? $match [5] [1] : $match [0] [1] + 1;
 		}
 		if ($directions === true) $this -> getDirections ();
 		return $this;
@@ -79,18 +78,15 @@ class Router extends \Opiner\Module
 		$route = substr($_SERVER['REQUEST_URI'], strlen(substr ($_SERVER['SCRIPT_NAME'], 0, strrpos ($_SERVER['SCRIPT_NAME'], '/') + 1)));
 		foreach ($this -> route_table as $index => $table)
 		{
-			$pattern = '#' . $this -> escape ($table ['wrap-begin']) . '(?P<' . $index . '>[a-zA-Z0-9-_]+)' . $this -> escape ($table['wrap-end']) . '#';
-			preg_match ($pattern, $route, $match, PREG_OFFSET_CAPTURE);
-			foreach ($match as $index => $value) {
-				if (is_string ($index) and $value[0] != '' and $value[0] != $this -> route_table [$index] ['default'])
-				{
-					$this -> $index = $value[0];
-					$route = substr ($route, 0, $match [0] [1]) . substr ($route, $match [0] [1] + strlen ($match [0] [0]));
-				}
-			};
+			$pattern = '#' . $this -> escape ($table ['wrap-begin']) . '([a-zA-Z0-9-_]+)' . $this -> escape ($table['wrap-end']) . '#';
+			if (preg_match ($pattern, $route, $match, PREG_OFFSET_CAPTURE) and $match [1] != $this -> route_table [$index] ['default'])
+			{
+				$this -> $index = $match [1] [0];
+				$route = substr ($route, 0, $match [0] [1]) . substr ($route, $match [0] [1] + strlen ($match [0] [0]));
+			}
 		}
 		foreach ($this -> route_table as $index => $value)
-		if ($index != 'app') $params[] = $this -> $index;
+		$params[] = $this -> $index;
 		$this -> active_table [] = $this -> route ($params);
 		return $this;
 	}
@@ -104,21 +100,23 @@ class Router extends \Opiner\Module
 
 	public function route ()
 	{
-		$route = $this -> complete_url ? array ('url' => Opiner::$remote) : array ('url' => '');
-		if (isset ($this -> route_table ['app']) and $this -> route_table ['app'] ['default'] != $this -> app)
-		$route ['app'] = $this -> route_table ['app'] ['wrap-begin'] . $this -> app . $this -> route_table ['app'] ['wrap-end'];
-		$int = 0;
+		$route [] = $this -> complete_url ? self::getWebRemote () : '';
+		$params = func_get_args ();
+		if (empty ($params)) return $route [0];
+		if (is_array ($params [0])) $params = $params [0];
 
-		foreach (func_get_args() as $index => $value)
+		foreach ($params as $index => $value)
 		{
-		        $value = is_array ($value) ? $this -> webalize ($value) : $value;
+			$value = is_array ($value) ? $this -> webalize ($value) : $value;
+			$index = is_int ($index) ? $this -> indexes [$index] : $index;
+
 			if (isset ($this -> route_table [$index]))
 			{
-			        $table = $this -> route_table [$index];
-			        $controller = method_exists ($this, $table ['controller']) ? $table ['controller'] : 'controller_encode';
-
-			        if ($table ['default'] != $value and $value != '')
-			        {
+				$table = $this -> route_table [$index];
+				$controller = method_exists ($this, $table ['controller']) ? $table ['controller'] : 'controller_encode';
+				
+				if ($table ['default'] != $value and $value != '')
+				{
 					if (isset ($last)) $route [] = $last;
 					$route [$index] = $table ['wrap-begin'] . $this -> $controller ($value) . $table ['wrap-end'];
 				}
@@ -167,23 +165,28 @@ class Router extends \Opiner\Module
 	 *	@return object self
 	 */
 
-	public function prepareCompilation ()
+	public function compile ()
 	{
 		// Načítanie súborovej štruktúry pre View
-		self::requireOnce (\Opiner\root . 'library/controller.class.php');
-		self::requireOnce (self::getWebRoot () . 'private/controllers/' . $this -> controller . '.php');
-		
-		$controllerName = '\\Opiner\\Controller\\' . $this -> controller;
-		if (!class_exists ($controllerName))
-		self::error ('Controller "' . $this -> controller . '" has not been found!');
-		else $this -> controllerObject = new $controllerName;
-		
-		$actionName = 'action' . $this -> action;
-		if (!method_exists ($this -> controllerObject, $actionName))
-		self::error ('Action "' . $this -> action . '" has not been found!');
+		self::getFile (\Opiner\root . 'class/controller.php');
+		if (!self::isFile (\Opiner\Application::location ('controller', $this -> controller)))
+		throw new \Opiner\Exception ($this -> controller, 210);
+		self::getFile (\Opiner\Application::location ('controller', $this -> controller));
 
+		// Nacitanie controllera		
+		$controllerName = '\\Opiner\\Controller\\' . ucfirst ($this -> controller);
+		if (!class_exists ($controllerName))
+		throw new \Opiner\Exception ($this -> controller, 211);
+		$this -> controllerObject = new $controllerName;
+		
+		// Spustenie pozadovanej akcie
+		$actionName = 'action' . ucfirst ($this -> action);
+		if (!method_exists ($this -> controllerObject, $actionName))
+		throw new \Opiner\Exception ($this -> controller . '|' . $this -> action, 212);
 		$this -> controllerObject -> $actionName ();
 
+		// Ukoncenie celeho procesu
+		\Opiner\Application::module ('template') -> setView ($this -> view);
 		return $this;
 	}
 

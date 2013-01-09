@@ -16,10 +16,34 @@ správne hodnoty pre korektné pripojenie k MySQL servru a databáze.
 
 
 
+Roadmap
+-------
+
+- Prepísanie triedy na prácu s databázou.
+- Dokoncenie rozhrania modelov a ORM structurovania.
+- Zjednodušenie šablonovacieho systému.
+- Vytvorenie rozhrania na prácu s formulármi.
+- (pridaj navrh na dalsie: tomas@tatarko.sk)
+
+
+
 Zoznam zmien
 ------------
 
-Opiner 0.2.1
+Opiner 0.4
+Weekly Build #4 [09.01.2013]
+- Pridany novy modul Cache (docasne uchovavanie rozlicnych hodnot).
+- Pridany novy modul Menu (jednoduche spravovanie menu).
+- Cely framework hadze teraz v pripade chyb Exception.
+- Nove trieda na vykreslenie debug dat.
+- Graficke osetrenie chyb spolu s debug informaciami.
+- Optimalizacia triedy Image pre novu proformu frameworku.
+- Kazdy controller je automaticky rozsireny o nove metody na pracu s menu.
+- Pouzivatelske moduly sa nacitavaju teraz ako prve (pred systemovymi).
+- Zakladny text pre default controller je teraz napojeny na aktualne zvoleny preklad systemu.
+- Pri pridavani novych cyklickych premennych do templatu je mozne pouzit aj vnorene vkladanie.
+
+Opiner 0.3
 Weekly Build #3 [04.01.2013]
 - Prekladovy system je uz plne funkcny.
 - Parsery vstupnych hodnot su izolovane od template triedy.
@@ -49,13 +73,3 @@ Weekly Build #1 [02.12.2012]
 - Prvá verzia v histórií verejne dostupná na internete.
 - Ponúka šablonovací systém, Router, rozhranie na prácu s obrázkami,
 databázou a ďalšie vychytávky.
-
-
-
-Roadmap
--------
-
-- Prepísanie triedy na prácu s databázou.
-- Zjednodušenie šablonovacieho systému.
-- Vytvorenie rozhrania na prácu s formulármi.
-- Vytvorenie rozhrania pre ľahkú správu menu.

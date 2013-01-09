@@ -2,7 +2,7 @@
 
 namespace Opiner;
 
-trait Behaviour {
+trait Behavior {
 	
 
 
@@ -20,13 +20,8 @@ trait Behaviour {
 				return true;
 				break;
 
-			case toReturn:
-				return false;
-				break;
-
-			default:
-				die('<p><strong>Error:</strong> ' . $string . '</p>');
-				break;
+			case toReturn: return false;
+			default: throw new Exception ($string);
 		}
 	}
 
@@ -48,31 +43,24 @@ trait Behaviour {
 	/* Vkladanie suborov s osetrenym opakovanim
 	 * @param string $file: Adresa suboru, ktory ma byt nacitany */
 
-	public static function requireOnce ($file)
+	public static function getFile ($file)
 	{
-		self::isFile ($file, toDie);
-		if (array_search ($file, Application::$log ['requiredFiles']) !== false) return true;
-		Application::$log ['requiredFiles'] [] = $file;
+		if (!self::isFile ($file))
+		throw new Exception ($file, 101);
 		return require_once ($file);
 	}
 
 
 
-	/* Vrati adresu sukromnych suborov instancie webu
-	 * @return string */
+	/* Ziska pole indexov z viacurovnoveho pola
+	 * @param array $data: Vstupne pole
+	 * @return array */
 
-	public static function getWebRoot ()
+	public static function getIndexes ($data)
 	{
-		return Application::$webRoot;
-	}
-
-
-
-	/* Vrati adresu verejnych suborov instancie webu
-	 * @return string */
-
-	public static function getWebRemote ()
-	{
-		return Application::$remote;
+		$indexes = [];
+		foreach ($data as $index => $value)
+		$indexes [] = $index;
+		return $indexes;
 	}
 }

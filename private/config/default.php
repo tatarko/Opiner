@@ -23,15 +23,28 @@ return [
 		],
 		'links'		=> ['remote/css/default.css'],
 	],
+	
+	'menu'	=> [
+		'navigation'	=> [
+			'type'	=> 'box',
+		],
+		'menu'	=> [
+			'type'	=> 'stack',
+		],
+		'helper' => [
+			'type'	=> 'bar',
+			'into'	=> 'menu',
+		],
+		'breadcrumbs' => true,
+	],
 
-	'language' => 'slovak',
-
+	'language'	=> 'slovak',
 	'router'	=> '{$controller:string:site$/{$action:string:default$/}}{$primary:int:0$/{$secondary:int:0$/}}',
+	'cache'		=> true,
 
 /*
 	'modules'	=> [
-		['mailtemp', 'template', 'mail'],
-		// Pod akym menom bude modul dostupny, O aky druh modulu ide, konfiguracia modulu
+		'mailtemp' => 'er',
 	],
 */
 ];

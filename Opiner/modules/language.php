@@ -5,8 +5,9 @@ namespace Opiner\Module;
 class Language extends \Opiner\Module
 {
 
-	use \Opiner\Behaviour;
-	protected $translations = [];		// Tabulka plna prekladovych fraz
+	protected
+		$translations = [],	// Tabulka plna prekladovych fraz
+		$language;		// Aky jazyk je aktivny?
 
 
 
@@ -15,7 +16,10 @@ class Language extends \Opiner\Module
 
 	public function startup ()
 	{
-		$this -> load ($this -> _settings [0]);
+		$this -> language = is_array ($this -> _settings) ? $this -> _settings [0] : $this -> _settings;
+		$this -> load ($this -> language);
+		unset ($this -> _settings);
+		return $this;
 	}
 
 
@@ -27,8 +31,8 @@ class Language extends \Opiner\Module
 	{
 		if (self::isFile (\Opiner\root . 'languages/' . $language . '.php'))
 		$this -> translations = array_merge ($this -> translations, require (\Opiner\root . 'languages/' . $language . '.php'));
-		if (self::isFile (self::getWebRoot () . 'private/languages/' . $language . '.php'))
-		$this -> translations = array_merge ($this -> translations, require (self::getWebRoot () . 'private/languages/' . $language . '.php'));
+		if (self::isFile (\Opiner\scripts . 'languages/' . $language . '.php'))
+		$this -> translations = array_merge ($this -> translations, require (\Opiner\scripts . 'languages/' . $language . '.php'));
 		return $this;
 	}
 
@@ -40,11 +44,25 @@ class Language extends \Opiner\Module
 
 	public function translate ($key)
 	{
+		$params = is_array ($key) ? $key : func_get_args ();
+		$key = current ($params);
+
 		if (!isset ($this -> translations [$key])) return '[translation missing: '. $key . ']';
 		$string = $this -> translations [$key];
-		foreach (func_get_args() as $index => $value)
+		foreach ($params as $index => $value)
 		$string = str_replace ('$' . $index, $value, $string);
 		return $string;
+	}
+
+
+
+	/* Odtestuje, ci existuje prekladova fraza
+	 * @param string $key: Kluc frazy, ktoru chceme prelozit
+	 * @return booelan */
+
+	public function test ($key)
+	{
+		return isset ($this -> translations [$key]);
 	}
 }
 

@@ -4,8 +4,9 @@
 namespace Opiner;
 
 // Zakladne konstanty
-const	name = 'Opiner',
-	version = '0.2.1',
+const
+	name = 'Opiner',
+	version = '0.2.2',
 	url = 'http://tatarko.github.com/Opiner/',
 	author = 'Tomáš Tatarko',
 	authorUrl = 'http://tatarko.sk/',
@@ -18,30 +19,35 @@ define ('Opiner\root', substr (str_replace ('\\', '/', __FILE__), 0, strrpos (st
 
 
 
-// Nacitanie zakladneho traitu
-require_once (root . 'library/behaviour.trait.php');
-
+// Nacitanie toho najzakladnejsieho
+require_once (root . 'class/exception.php');
+try {
+	require_once (root . 'trait/behavior.php');
+} catch (Exception $e) {
+	die ($e);
+}
 
 
 // Samotna trieda aplikacie
 class Application {
 
-	use Behaviour;
+	use Behavior;
+	
+	const
+		locationConfig		= '[scripts]config/$1.php',
+		locationController	= '[scripts]controllers/$1.php',
+		locationModules		= '[scripts]modules/$1.php';
 
 	public static
 		$headerType = 'text/html',	// Aky mimetype ma byt poslany do hlaviciek
 		$charSet = 'UTF-8',		// Ake kodovanie pouzivame
-		$remote,			// Adresa web-servera
-		$webRoot,			// Fyzicka adresa k suborom instancie aplkacie
-		$log = ['errors' => [], 'requiredFiles' => [], 'database' => []];
-						// Co vsetko sme zalogovali
+		$log = [];			// Co budeme logovat
 
 	protected static
-		$settings = [],			// Pole nastaveni aplikacie
+		$settings = ['modules' => []],	// Pole nastaveni aplikacie
 		$modules = [],			// Nacitane moduly
-		$starttime = 0,			// Kedy sa aplikacia zacala generovat
-		$debug = false,			// Maju byt vykreslene debug informacie?
-		$systemModules = ['database', 'template', 'router', 'language'];
+		$debug,				// Debug objekt
+		$moduleIndexes = ['cache', 'database', 'language', 'router', 'menu', 'template'];
 						// Ake moduly automaticky nacitavat?
 
 
@@ -50,77 +56,88 @@ class Application {
 	 * @param string $webRoot: Adresa suboru, cez ktory bol zavolany Opiner (__FILE__)
 	 * @param string $configFile: Nazov konfiguracneho suboru z /private/config, ktory sa ma nacitat */
 
-	public static function load ($webRoot, $configFile = null)
+	public static function compile ($webRoot, $configFile = null)
 	{
-
-		// Nasadenie zakladnych premennych objektu
-		self::$webRoot = substr (str_replace ('\\', '/', $webRoot), 0, strrpos (str_replace ('\\', '/', $webRoot), '/')) . '/';
-		self::$remote = 'http://' . $_SERVER['HTTP_HOST'] . substr ($_SERVER['SCRIPT_NAME'], 0, strrpos ($_SERVER['SCRIPT_NAME'], '/') + 1);
-
-		// Osetrenie debuggingu
-		if (substr (self::$remote, 0, 17) == 'http://localhost/')
+		try
 		{
-			self::$debug = true;
-			self::$starttime = microtime (true);
-		}
 
-		// Práca s hlavičkami, kodovanim
-		Header ('Content-Type: ' . self::$headerType . '; charset=' . self::$charSet);
-		mb_internal_encoding (self::$charSet);
-		mb_regex_encoding (self::$charSet);
+			// Nasadenie zakladnych premennych objektu
+			define ('Opiner\\web', substr (str_replace ('\\', '/', $webRoot), 0, strrpos (str_replace ('\\', '/', $webRoot), '/')) . '/');
+			define ('Opiner\\scripts', substr (str_replace ('\\', '/', $webRoot), 0, strrpos (str_replace ('\\', '/', $webRoot), '/')) . '/private/');
+			define ('Opiner\\remote', 'http://' . $_SERVER['HTTP_HOST'] . substr ($_SERVER['SCRIPT_NAME'], 0, strrpos ($_SERVER['SCRIPT_NAME'], '/') + 1));
 
-		// Načítanie konfiguracie zo súboru
-		if ($configFile !== null)
-		{
-			self::isFile (self::$webRoot . 'private/config/' . $configFile . '.php', toDie);
-			self::$settings = require (self::$webRoot . 'private/config/' . $configFile . '.php');
-		}
-		self::loadModules ();
-	}
-
-
-
-	/* Nacita predvolene moduly, pokial je v konfigu zmienka o nich */
-
-	protected static function loadModules ()
-	{
-		// Nacitanie vzoroveho modulu
-		self::isFile (root . 'library/module.class.php', toDie);
-		self::requireOnce (root . 'library/module.class.php');
-
-		// Nacitavanie postupne kazdeho jedneho modulu
-		foreach (self::$systemModules as $module)
-		if (isset (self::$settings [$module]))
-		{
-			$name = '\\Opiner\\Module\\' . $module;
-			$config = is_array (self::$settings [$module]) ? self::$settings [$module] : [self::$settings [$module]];
-
-			self::isFile (root . 'modules/' . $module . '.php', toDie);
-			self::requireOnce (root . 'modules/' . $module . '.php');
-			self::$modules [$module] = (new $name ($config)) -> startup ();
-		}
-
-		// Nacitavanie modulov na poziadanie
-		if (isset (self::$settings ['modules']))
-		foreach (self::$settings ['modules'] as $module)
-		if (is_array ($module) and count ($module) == 3)
-		{
-			$name = '\\Opiner\\Module\\' . $module [1];
-			$config = is_array ($module [2]) ? $module [2] : [$module [2]];
-
-			// Z internych modulov
-			if (self::isFile (root . 'modules/' . $module [1] . '.php', toReturn))
+			// Práca s hlavičkami, kodovanim
+			Header ('Content-Type: ' . self::$headerType . '; charset=' . self::$charSet);
+			mb_internal_encoding (self::$charSet);
+			mb_regex_encoding (self::$charSet);
+		
+			// Nacitanie suborov, priprava debugu
+			self::getFile (root . 'class/debug.php');
+			self::getFile (root . 'class/module.php');
+			//self::getFile (root . 'class/model.php'); TODO
+			self::$debug = new Debug ();
+	
+			// Načítanie konfiguracie zo súboru
+			if ($configFile !== null)
 			{
-				self::requireOnce (root . 'modules/' . $module [1] . '.php');
-				self::$modules [$module [0]] = (new $name ($config)) -> startup ();
+				$file = self::location ('config', $configFile);
+				if (!self::isFile ($file))
+				throw new Exception ($configFile, 102); 
+				self::$settings = array_merge (self::$settings, require ($file));
 			}
 			
-			// Externe moduly
-			elseif (self::isFile (self::getWebRoot . 'private/modules/' . $module [1] . '.php', toReturn))
+			// Nacitanie modelov #TODO
+/*
+			$dir = opendir (scripts . 'models');
+			while ($file = readdir ($dir))
+			if (substr ($file, -4) == '.php')
+			self::getFile (scripts . 'models/' . $file);
+*/
+			
+			// Predpriprava externych modulov
+			$indexes = [];
+			foreach (self::$settings ['modules'] as $index => $type)
 			{
-				self::requireOnce (root . 'private/modules/' . $module [1] . '.php');
-				self::$modules [$module [0]] = (new $name ($config)) -> startup ();
-			};
+				$indexes [] = $index;
+				self::$settings [$index] ['type'] = $type;
+			}
+			self::$moduleIndexes = array_merge ($indexes, self::$moduleIndexes);
+
+			// Nacitavanie modulov na poziadanie
+			foreach (self::$moduleIndexes as $module)
+			{
+				$type = isset (self::$settings [$module] ['type']) ? self::$settings [$module] ['type'] : $module;
+				$name = '\\Opiner\\Module\\' . ucfirst ($type);
+				$config = isset (self::$settings [$module]) ? self::$settings [$module] : null;
+
+				// Z internych modulov
+				if (self::isFile (root . 'modules/' . $type . '.php'))
+				{
+					self::getFile (root . 'modules/' . $type . '.php');
+					self::$modules [$module] = new $name ($config);
+				}
+			
+				// Externe moduly
+				elseif (self::isFile (self::location ('modules', $type)))
+				{
+					self::getFile (self::location ('modules', $type));
+					if (!class_exists ($name))
+					throw new Exception ($type, 111);
+					self::$modules [$module [0]] = new $name ($config);
+				}
+				else throw new Exception ($type, 110);
+			}
+
+			// Postupne spustanie vsetkych ocakavanych metod
+			$methods = ['startup', 'prepareCompilation', 'compile', 'afterCompilation'];
+			foreach ($methods as $method)
+			foreach (self::$modules as $module)
+			if (method_exists ($module, $method))
+			$module -> $method ();
+
+			echo self::$debug;
+		} catch (Exception $exception) {
+			die ($exception);
 		}
 	}
 
@@ -153,57 +170,21 @@ class Application {
 
 
 
-	/* Samotne kompilovanie stranky
-	 * @return self */
+	/* Vrati object reprezentujuci pozadovany modul
+	 * @param string $localname: Ktory modul ma byt vrateny */
 
-	public static function compile ()
+	public static function location ($type)
 	{
-		$methods = ['prepareCompilation', 'compile', 'afterCompilation'];
-		foreach ($methods as $method)
-		foreach (self::$modules as $module)
-		if (method_exists ($module, $method))
-		$module -> $method ();
-		if (self::$debug) self::debug ();
-	}
-
-
-
-	/* Vystup debuggera
-	 * @return self */
-
-	protected static function debug ()
-	{
-		foreach (get_defined_constants () as $index => $value)
-		if (substr ($index, 0, 6) == 'Opiner') $vars[] = $index . ' = ' . var_export($value, true) . ';';
-		$funcs = get_defined_functions ();
-		foreach (get_declared_classes() as $trieda)
-		if (substr ($trieda, 0, 6) == 'Opiner') $classes[] = $trieda;
-			
+		if (!defined ('Opiner\\Application::location' . ucfirst ($type)))
+		throw new Exception ($type, 103);
 		
-echo '
-
-<div style="display:block;position:fixed;bottom:0;right:0;width:300px;height:21px;background:#333 -webkit-gradient(linear, left top, left bottom, from(#383838), to(#222));color:#eee;text-shadow:1px 1px 0 #000;padding:0 10px;font:normal 11px Calibri;line-height:21px;text-align:center;-webkit-border-radius:4px 0 0 0;">
-' . round ((microtime (true) - self::$starttime) * 1000) . 'ms / ' . count(get_included_files()) . ' files / ' . count($classes) . ' classes / ' . count($funcs['user']) . ' functions / ' . count($vars) . ' constants / ' . count(self::$log) . ' queries
-</div>
-
-<!--
-
-Files:
-' . implode ("\n", get_included_files()) . '
-
-Classes:
-' . implode ("\n", $classes) . '
-
-Functions:
-' . implode ("\n", $funcs['user']) . '
-
-Constants:
-' . implode ("\n", $vars) . '
-
-Log:
-' . var_export (self::$log, true) . '
-
--->';
+		$route = constant ('Opiner\\Application::location' . ucfirst ($type));
+		foreach (func_get_args () as $index => $value)
+		$route = str_replace ('$' . $index, $value, $route);
+		while (preg_match ('#\[([a-z]+)\]#ius', $route, $match))
+		$route = str_replace ($match [0], defined ('Opiner\\' . $match [1]) ? constant ('Opiner\\' . $match [1]) : '', $route);
+		
+		return $route;
 	}
 }
 ?>

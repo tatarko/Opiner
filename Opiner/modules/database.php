@@ -2,21 +2,20 @@
 
 namespace Opiner\Module;
 
+class Database extends \Opiner\Module
+{
 
-
-class Database extends \Opiner\Module {
-
-	use \Opiner\Behaviour;
-
-	const	all = true,
+	const
+		all = true,
 		whole = '*',
 		comma = ', ',
 		wrap = '`~`';
 	
-	protected	$connection,
-			$segments = array (),
-			$disable = null,
-			$prefix = '';
+	protected
+		$connection,
+		$segments = array (),
+		$disable = null,
+		$prefix = '';
 
 
 
@@ -26,10 +25,8 @@ class Database extends \Opiner\Module {
 	public function startup ()
 	{
 		if (!isset ($this -> _settings ['server'], $this -> _settings ['username'], $this -> _settings ['password'], $this -> _settings ['database']))
-		self::error ('Settings does not match enough data for connecting to database!');
-
-		if (!$this -> connect ($this -> _settings ['server'], $this -> _settings ['username'], $this -> _settings ['password'], $this -> _settings ['database']))
-		self::error ('Connecting to MySQL server or database has failed!');
+		throw new \Opiner\Exception (null, 220);
+		$this -> connect ($this -> _settings ['server'], $this -> _settings ['username'], $this -> _settings ['password'], $this -> _settings ['database']);
 
 		if ($this -> _settings ['prefix'])
 		$this -> setPrefix ($this -> _settings ['prefix']);
@@ -45,6 +42,7 @@ class Database extends \Opiner\Module {
 		if ($this -> _settings ['relations'] === true)
 		$this -> mapRelations ();
 
+		unset ($this -> _settings);
 		return $this;
 	}
 
@@ -59,10 +57,10 @@ class Database extends \Opiner\Module {
 
 	public function connect ($server, $username, $password, $database = null)
 	{
-		if (false === ($this -> connection = mysql_pconnect ($server, $username, $password)))
-		self::error ('Connection to MySQL server "' . $server . '" has failed!');
-		if ($database !== null and !mysql_select_db ($database, $this -> connection))
-		self::error ('Connection to database "' . $database . '" has failed!');
+		if (false === ($this -> connection = @mysql_pconnect ($server, $username, $password)))
+		throw new \Opiner\Exception ($server, 221);
+		if ($database !== null and !@mysql_select_db ($database, $this -> connection))
+		throw new \Opiner\Exception ($database, 222);
 		$this -> query ('SET NAMES `utf8` COLLATE `utf8_general_ci`');
 		return true;
 	}
@@ -107,6 +105,7 @@ class Database extends \Opiner\Module {
 		if (false === ($result = mysql_query ($string, $this -> connection)))
 		{
 			self::error (mysql_error(), \Opiner\toLog);
+			$this -> segments = array ();
 			return false;
 		}
 		$this -> segments = array ();
@@ -172,7 +171,7 @@ class Database extends \Opiner\Module {
 	// Výber tabuľky
 	public function send ($result = false)
 	{
-	        if ($result === true)
+		if ($result === true)
 		return $this -> query (implode (' ', $this -> segments));
 		$this -> result = $this -> query (implode (' ', $this -> segments));
 		return $this;
@@ -184,8 +183,8 @@ class Database extends \Opiner\Module {
 	{
 		if (!is_array ($where))
 		{
-		        $array = func_get_args();
-		        $where = array ();
+			$array = func_get_args();
+			$where = array ();
 			foreach ($array as $index => $value)
 			{
 				if ($index % 2 == 0)
@@ -198,27 +197,34 @@ class Database extends \Opiner\Module {
 			list ($index, $type, $mark) = array_merge (explode ('#', $index), array ('=', '='));
 			switch ($type)
 			{
+
 				case 'valsql':
-				        $segments[] = implode (' ', array ($this -> getWrap ($index), $mark, $value));
-				        break;
+					$segments[] = implode (' ', array ($this -> getWrap ($index), $mark, $value));
+				    break;
+
 				case 'int':
-				        $segments[] = implode (' ', array ($this -> getWrap ($index), $mark, intval ($value)));
-				        break;
+					$segments[] = implode (' ', array ($this -> getWrap ($index), $mark, intval ($value)));
+					break;
+
 				case 'value':
-				        $segments[] = implode (' ', array ($this -> getWrap ($index), $mark, $this -> getWrap ($value)));
-				        break;
+					$segments[] = implode (' ', array ($this -> getWrap ($index), $mark, $this -> getWrap ($value)));
+					break;
+
 				case 'like':
-				        $segments[] = implode (' ', array ($this -> getWrap ($index), 'LIKE', "'" . mysql_real_escape_string ($value) . "'"));
-				        break;
+					$segments[] = implode (' ', array ($this -> getWrap ($index), 'LIKE', "'" . mysql_real_escape_string ($value) . "'"));
+					break;
+
 				case 'in':
-				        $segments[] = '(' . $this -> getWrap ($index) . ' IN (' . implode (', ', array_unique($value)) . '))';
-				        break;
+					$segments[] = '(' . $this -> getWrap ($index) . ' IN (' . implode (', ', array_unique($value)) . '))';
+					break;
+
 				case 'sql':
-				        $segments[] = implode (' ', array ($index, $mark, "'" . mysql_real_escape_string ($value) . "'"));
-				        break;
+					$segments[] = implode (' ', array ($index, $mark, "'" . mysql_real_escape_string ($value) . "'"));
+					break;
+
 				default:
-				        $segments[] = implode (' ', array ($this -> getWrap ($index), $mark, "'" . mysql_real_escape_string ($value) . "'"));
-				        break;
+					$segments[] = implode (' ', array ($this -> getWrap ($index), $mark, "'" . mysql_real_escape_string ($value) . "'"));
+					break;
 			}
 		}
 		if (isset ($segments))
@@ -238,18 +244,19 @@ class Database extends \Opiner\Module {
 			switch ($type)
 			{
 				case 'int':
-				        $values[$index] = intval ($value);
-				break;
-				case 'sql':
-				        $values[$index] = $value;
-				break;
-				default:
-				        $values[$index] = $value == '' ? 'NULL' : "'" . mysql_real_escape_string ($value) . "'";
-				break;
+					$values[$index] = intval ($value);
+					break;
 
+				case 'sql':
+					$values[$index] = $value;
+					break;
+
+				default:
+					$values[$index] = $value == '' ? 'NULL' : "'" . mysql_real_escape_string ($value) . "'";
+					break;
 			}
 		}
-		$this -> segments [] = 'INSERT INTO ' . $this -> getWrap ($table) . ' (' . implode (', ', $keys) . ') VALUES (' . implode (', ', $values) . ');';
+		$this -> segments [] = 'INSERT INTO ' . $this -> getWrap ($this -> prefix . $table) . ' (' . implode (', ', $keys) . ') VALUES (' . implode (', ', $values) . ');';
 		return $this;
 	}
 
@@ -266,14 +273,15 @@ class Database extends \Opiner\Module {
 			{
 				case 'int':
 					$values[$index] = intval ($value);
-				break;
-				case 'sql':
-				        $values[$index] = $value;
-				break;
-				default:
-				        $values[$index] = $value == '' ? 'NULL' : "'" . mysql_real_escape_string ($value) . "'";
-				break;
+					break;
 
+				case 'sql':
+					$values[$index] = $value;
+					break;
+
+				default:
+					$values[$index] = $value == '' ? 'NULL' : "'" . mysql_real_escape_string ($value) . "'";
+					break;
 			}
 		}
 		foreach ($values as $index => $value) $segments [] = $this -> getWrap ($index) . ' = ' . $value;
@@ -314,7 +322,7 @@ class Database extends \Opiner\Module {
 	// Výber zaznamov
 	public function fetch ()
 	{
-	        $this -> send ();
+		$this -> send ();
 		if (false === $this -> result) return false;
 		$result = array ();
 		while ($data = $this -> result ($this -> result))
@@ -325,7 +333,7 @@ class Database extends \Opiner\Module {
 	// Výber jednej hodnoty
 	public function fetchValue ()
 	{
-	        $this -> limit (1) -> send ();
+		$this -> limit (1) -> send ();
 		if (false === $this -> result) return false;
 		$data = $this -> result ($this -> result);
 		return is_array ($data) ? current($data) : $data;
@@ -334,7 +342,7 @@ class Database extends \Opiner\Module {
 	// Výber jedného riadka
 	public function fetchRow ()
 	{
-	        $this -> limit (1) -> send ();
+		$this -> limit (1) -> send ();
 		if (false === $this -> result) return false;
 		$data = $this -> result ($this -> result);
 		return $data;
@@ -343,12 +351,12 @@ class Database extends \Opiner\Module {
 	// Obalenie indexov
 	protected function getWrap ($index)
 	{
-	        $index = explode ('/', $index);
-	        if (count ($index) == 2)
-	        {
-	                if (strlen ($index[0]) == 1)
+		$index = explode ('/', $index);
+		if (count ($index) == 2)
+		{
+			if (strlen ($index[0]) == 1)
 			$index [0] = 'table_' . chr (ord (intval ($index[0])) + 48);
-	                return str_replace ('~', $index [0], self::wrap) . '.' . $this -> parseValue ($index [1]);
+			return str_replace ('~', $index [0], self::wrap) . '.' . $this -> parseValue ($index [1]);
 		}
 		return $this -> parseValue ($index [0]);
 	}
@@ -357,19 +365,17 @@ class Database extends \Opiner\Module {
 	protected function parseValue ($index)
 	{
 		$index = explode ('#', $index);
-	        if (count ($index) == 3 and $index[1] == 'sql') return $index[0] . ' as ' . str_replace ('~', $index[2], self::wrap);
-	        if (count ($index) == 2 and $index[1] == 'sql') return $index[0];
-	        return $this -> rename ($index [0]);
+		if (count ($index) == 3 and $index[1] == 'sql') return $index[0] . ' as ' . str_replace ('~', $index[2], self::wrap);
+		if (count ($index) == 2 and $index[1] == 'sql') return $index[0];
+		return $this -> rename ($index [0]);
 	}
 
 	// Pridanie indexu tabuliek
 	protected function rename ($index)
 	{
 		if (preg_match('#([a-z]+)\[([a-z]*?)\]#', $index, $match))
-		{
-			return str_replace ('~', $match[1], self::wrap) . ' as ' . str_replace ('~', $match[2], self::wrap);
-		}
-		else return str_replace ('~', $index, self::wrap);
+		return str_replace ('~', $match[1], self::wrap) . ' as ' . str_replace ('~', $match[2], self::wrap);
+		return str_replace ('~', $index, self::wrap);
 	}
 
 	// Pridanie prefixu
@@ -406,7 +412,7 @@ class Database extends \Opiner\Module {
 	public function multiFetch ()
 	{
 		// Spracovanie zakladneho query
-	        $this -> send ();
+		$this -> send ();
 		if (false === $this -> result) return false;
 		$tablename = end ($this -> tablelog);
 		$result = array ();
@@ -455,11 +461,20 @@ class Database extends \Opiner\Module {
 	/* Po skonceni kompilovania stranky sa pekne krasne odpojime
 	 * @return self */
 
-	 public function afterCompilation ()
-	 {
-		 mysql_close ($this -> connection);
-	 }
+	public function afterCompilation ()
+	{
+		mysql_close ($this -> connection);
+	}
 
+
+
+	/* Ziskaj hodnotu AUTO_INCREMENT z naposledy pridaneho zaznamu
+	 * @return int */
+
+	public function getAutoIncrementValue ()
+	{
+		return mysql_insert_id ($this -> connection);
+	}
 }
 
 ?>

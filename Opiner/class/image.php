@@ -1,29 +1,24 @@
 <?php
 
-// Kontrola jadra
-if (!defined ('_root') or false !== strpos ($_SERVER['PHP_SELF'], '.inc.php')) die (header ('HTTP/1.1 403 Forbidden') . 'Unauthorized Access!');
+namespace Opiner;
 
-
-
-// Trieda template
-class image
+class Image
 {
 
-	
 	protected
-	$filename,
-	$width,
-	$height,
-	$type,
-	$suffix,
-	$palette;
+		$filename,
+		$width,
+		$height,
+		$type,
+		$suffix,
+		$palette;
 	
 	public static
-	$defaultJpegQuality = 90;
+		$defaultJpegQuality = 90;
 
 	const
-	white = 16777215,
-	black = 0;
+		white = 16777215,
+		black = 0;
 
 
 
@@ -35,12 +30,12 @@ class image
 
 	public function __construct ($filename)
 	{
-    	$this -> filename = $filename;
+		$this -> filename = $filename;
 		if (false === ($info = getimagesize ($this -> filename)))
 		return false;
-		$this -> width = $info[0];
-		$this -> height = $info[1];
-		$this -> type = $info['mime'];
+		$this -> width = $info [0];
+		$this -> height = $info [1];
+		$this -> type = $info ['mime'];
 		$this -> suffix = substr ($this -> filename, strrpos ($this -> filename, '.') + 1);
 		if ($this -> suffix == 'tmp' or strlen ($this -> suffix) != 3)
 		{
@@ -49,14 +44,14 @@ class image
 				case 'image/jpeg': $this -> suffix = 'jpg'; break;
 				case 'image/png': $this -> suffix = 'png'; break;
 				case 'image/gif': $this -> suffix = 'gif'; break;
-			};
-		};
+			}
+		}
 		switch ($this -> suffix)
 		{
 			case 'jpg': $this -> palette = imagecreatefromjpeg ($this -> filename); break;
 			case 'png': $this -> palette = imagecreatefrompng ($this -> filename); break;
 			case 'gif': $this -> palette = imagecreatefromgif ($this -> filename); break;
-		};
+		}
 		return $this;
 	}
 
@@ -80,7 +75,7 @@ class image
 		{
 			$help = ceil ($this -> width / ($this -> height / $height));
 			$helppalette = imagecreatetruecolor ($help, $height);
-			imagefilledrectangle ($helppalette, 0, 0, $help, $height, image::white);
+			imagefilledrectangle ($helppalette, 0, 0, $help, $height, self::white);
 			imagecopyresampled ($helppalette, $this -> palette, 0, 0, 0, 0, $help, $height, $this -> width, $this -> height);
 			$palette = imagecreatetruecolor ($width, $height);
 			imagecopy ($palette, $helppalette, 0, 0, round (($help - $width)/2), 0, $width, $height);
@@ -89,7 +84,7 @@ class image
 		{
 			$help = ceil ($this -> height / ($this -> width / $width));
 			$helppalette = imagecreatetruecolor ($width, $help);
-			imagefilledrectangle ($helppalette, 0, 0, $width, $help, image::white);
+			imagefilledrectangle ($helppalette, 0, 0, $width, $help, self::white);
 			imagecopyresampled ($helppalette, $this -> palette, 0, 0, 0, 0, $width, $help, $this -> width, $this -> height);
 			$palette = imagecreatetruecolor ($width, $height);
 			imagecopy ($palette, $helppalette, 0, 0, 0, round (($help - $height)/2), $width, $height);
@@ -115,33 +110,20 @@ class image
 	 *      Výsledné vygenerovanie obrázka z kreslacieho plátna
 	 *      @param string filaname Kam uložiť obrázok
 	 *      @param boolean false filename Ak má byť obrázok vykreslený do prehliadača
-	 *      @param int q Kvalita ukladaného JPG obrázku
 	 *      @return object self
 	 */
 
-	public function output ($filename = false, $q = 90)
+	public function output ($filename = false)
 	{
 		if ($filename === false) Header ('Content-type: ' . $this -> type);
 		else if (false === strpos ($filename, '.' . $this -> suffix)) $filename .= '.' . $this -> suffix;
 		switch ($this -> suffix)
 		{
-			case 'jpg': imagejpeg ($this -> palette, $filename, Opiner::$defaultJpegQuality);
+			case 'jpg': imagejpeg ($this -> palette, $filename, self::$defaultJpegQuality);
 			case 'png': imagepng ($this -> palette, $filename);
-			case 'png': imagegif ($this -> palette, $filename);
+			case 'gif': imagegif ($this -> palette, $filename);
 		}
 		return $this;
-	}
-
-
-
-	/**
-	 *      Vráti príponu obrázku
-	 *      @return string
-	 */
-
-	public function suffix ()
-	{
-		return '.' . $this -> suffix;
 	}
 }
 ?>

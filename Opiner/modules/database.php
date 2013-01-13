@@ -2,6 +2,23 @@
 
 namespace Opiner\Module;
 
+
+
+/**
+ * Komunikacia s MySQL databazou
+ *
+ * Pomocou tohto modulu moze programator velmi jednoduchou
+ * formou cachovat urcite premenne. Cachovat pri tom
+ * znamena ulozit vysledok nejakej funkcie na urcitu
+ * dobu. Pri najblizsom spusteni stranky tak tato
+ * funkcia nemusi byt spustana, a to jednak odlahsi
+ * zataz hardwaru a prispeje to aj k rychlejsiemu
+ * nacitaniu webovej stranky.
+ *
+ * @author Tomas Tatarko
+ * @since 0.3
+ */
+
 class Database extends \Opiner\Module
 {
 
@@ -19,8 +36,24 @@ class Database extends \Opiner\Module
 
 
 
-	/* Startovanie modulu ako volanie z aplikacie
-	 * @return object self */
+	/**
+	 * Startovanie modulu ako volanie z aplikacie
+	 *
+	 * V prvom kroku tejto metody sa overi, ci existuju vsetky
+	 * potrebne premenne pre spravne pripojenie k databaze.
+	 * Ak nie, vyhodi sa vynimka a skonci tak kompilovanie
+	 * frameworku. Ak existuju, modul sa pokusi pripojit
+	 * k ziadanemu MySQL servru a databaze prostrednictvom metody
+	 * connect(). Tu tiez moze dojst k vyhodeniu vynimky.
+	 *
+	 * Ak pole nastaveni tohto modulu obsahuje zmienku aj
+	 * o moznej konfiguracii v databaze, tak sa framework
+	 * pokusi tuto konfiguraciu ziskat. Okrem toho sa este
+	 * podla nastaveni modulu nastavuje prefix tabuliek alebo
+	 * mapuju relacie medzi tabulkami.
+	 *
+	 * @return object
+	 */
 
 	public function startup ()
 	{
@@ -39,8 +72,8 @@ class Database extends \Opiner\Module
 			\Opiner\Application::config ($row [$this -> _settings ['settings'] [1]], $row [$this -> _settings ['settings'] [2]], false);
 		}
 
-		if ($this -> _settings ['relations'] === true)
-		$this -> mapRelations ();
+		/*if ($this -> _settings ['relations'] === true)
+		$this -> mapRelations ();*/
 
 		unset ($this -> _settings);
 		return $this;
@@ -48,12 +81,20 @@ class Database extends \Opiner\Module
 
 
 
-	/* Funkcia na pripojenie k mysql servru a databaze
-	 * @param string $server: Adresa MySQL servra ku ktoremu sa chceme pripojit
-	 * @param string $username: Meno pouzivatela, pod ktorym sa chceme prihlasit
-	 * @param string $password: Heslo pouzivatela, pod ktorym sa chceme prihlasit
-	 * @param string $database: Databaza, z ktorej budeme cerpat udaje
-	 * @return object boolean */
+	/**
+	 * Pripojenie k servru/databaze
+	 *
+	 * Na zaklade argumentov predanych tejto metode
+	 * sa pokusi pripojit k databaze (volitelne). Ak sa
+	 * nieco z toho nepodari, metoda vrati vynimku a dochadza
+	 * tak k ukonceniu kompilovania frameworku.
+	 *
+	 * @param string Adresa MySQL servra ku ktoremu sa chceme pripojit
+	 * @param string Meno pouzivatela, pod ktorym sa chceme prihlasit
+	 * @param string Heslo pouzivatela, pod ktorym sa chceme prihlasit
+	 * @param string Databaza, z ktorej budeme cerpat udaje
+	 * @return boolean
+	 */
 
 	public function connect ($server, $username, $password, $database = null)
 	{
@@ -68,7 +109,7 @@ class Database extends \Opiner\Module
 
 
 	/* Mapovanie vztahov medzi tabulkami v databaze
-	 * @return self */
+	 * @return self /
 
 	public function mapRelations ()
 	{
@@ -86,13 +127,16 @@ class Database extends \Opiner\Module
 			}
 		}
 		return $this;
-	}
+	}*/
 
 
 
-	/* Odosielanie SQL prikazu
-	 * @param string $string: Samotna SQL quera volana na db
-	 * @return boolean/array */
+	/**
+	 * Odosielanie SQL prikazu
+	 *
+	 * @param string Samotna SQL quera volana na db
+	 * @return boolean Pripadne resourceid
+	 */
 
 	protected function query ($string)
 	{
@@ -102,7 +146,7 @@ class Database extends \Opiner\Module
 			self::error ($this -> disable . ' | Full Syntax: ' . $string, \Opiner\toLog);
 			return false;
 		}
-		if (false === ($result = mysql_query ($string, $this -> connection)))
+		if (false === $result = mysql_query ($string, $this -> connection))
 		{
 			self::error (mysql_error(), \Opiner\toLog);
 			$this -> segments = array ();
@@ -115,9 +159,15 @@ class Database extends \Opiner\Module
 
 
 
-	/* Pri opakovanom vybere dat v ramci jeden query, vracia jednotlive riadky
-	 * @param pointer $query: Odkaz na query, z ktorej tahame riadky
-	 * @return boolean/array */
+	/**
+	 * Vrati jeden riadok
+	 *
+	 * Pri vytahovani viacerych vysledkov sa tato
+	 * funkcia vola stale dookola, az kym nevrati false
+	 *
+	 * @param pointer Odkaz na query, z ktorej tahame riadky
+	 * @return boolean/array
+	 */
 
 	protected function result ($query)
 	{
@@ -126,9 +176,21 @@ class Database extends \Opiner\Module
 
 
 
-	/* Generovanie SELECT statement-u pri SQL prikazoch
-	 * @param mixed $first: Prvy zo stlpcov, ktore sa maju tahat
-	 * @return self */
+	/**
+	 * Generovanie SELECT statement-u pri SQL prikazoch
+	 *
+	 * Tato metoda sluzi na urcenie toho, ake data chceme
+	 * dostat pri vytahovani vysledkov z databazy. Tato
+	 * metoda ma premenlivy pocet argumentov. Kazdy argument
+	 * je vlastne dalsie a dalsie policko, ktore chceme dostat.
+	 * Ak je tato metoda volana bez argumentov, tak dochadza
+	 * k vyberu vsetkych dat danej tabulky. Okrem toho este moze
+	 * byt prvym argumentom aj pole a vtedy sa nacitavaju
+	 * elementy tohto pola ako jednotlive bunky.
+	 *
+	 * @param string Co chceme nacitat
+	 * @return object
+	 */
 
 	public function select ($first = self::all)
 	{
@@ -145,14 +207,19 @@ class Database extends \Opiner\Module
 
 
 
-	/* Funkcia na pripojenie k mysql servru a databaze
-	 * @param string server: Adresa MySQL servra ku ktoremu sa chceme pripojit
-	 * @param string username: Meno pouzivatela, pod ktorym sa chceme prihlasit
-	 * @param string password: Heslo pouzivatela, pod ktorym sa chceme prihlasit
-	 * @param string database: Databaza, z ktorej budeme cerpat udaje
-	 * @return object boolean */
+	/**
+	 * Definovanie, z ktorych tabuliek tahat data
+	 *
+	 * Tato metoda ma premenlivy pocet argumentov, pricom
+	 * kazdy jeden predstavuje nazov dalsej a dalsej tabulky,
+	 * z ktorej chceme ziskavat udaje. Zoznam tabuliek moze byt
+	 * predany aj ako pole v prvom argumente.
+	 *
+	 * @param string Nazov tabulku.
+	 * @return object
+	 */
 
-	public function table ()
+	public function table ($table)
 	{
 		$tables = func_get_args();
 		$tables = is_array ($tables [0]) ? $tables [0] : $tables;
@@ -168,8 +235,22 @@ class Database extends \Opiner\Module
 		return $this;
 	}
 
-	// Výber tabuľky
-	public function send ($result = false)
+
+
+	/**
+	 * Odosielanie prikazu
+	 *
+	 * Ak programator uz po ciastkach vyskladal prikaz,
+	 * ktory chce v databaze vykovat, moze ho pomocou
+	 * tejto metody odoslat. Podla hodnoty prveho argumentu
+	 * sa nasledne odosiela vysledok tejto akcie alebo uklada
+	 * lokalne pre neskorsie citanie.
+	 *
+	 * @param boolean Odoslat vysledok akcie?
+	 * @return boolean Pripadne object
+	 */
+
+	public function send ($result = true)
 	{
 		if ($result === true)
 		return $this -> query (implode (' ', $this -> segments));
@@ -178,7 +259,28 @@ class Database extends \Opiner\Module
 	}
 
 
-	// Tvorenie WHERE podmienok
+
+	/**
+	 * Tvorenie podmienok
+	 *
+	 * Tato prida do skladaneho SQL prikazy novy segment
+	 * s WHERE klauzulou. Prakticky ide o definovanie
+	 * podmienok vyberu dat. Tieto podmienky sa predavaju
+	 * ako jednotlive argumenty tejto metody a vzdy v paroch.
+	 * To znamena, ze neparny argument predstavuje bunku
+	 * tabulku, ktoru chceme porovnat a parny argument
+	 * zase hodnotou, z ktorou ju chceme porovnat.
+	 *
+	 * Tieto podmienky mozu byt predane aj ako pole, vtedy
+	 * plati, ze index zaznamu pola urcuje bunku, ktoru
+	 * chceme porovnat a jeho hodnota urcuje to, s cim chceme
+	 * hladany zaznam porovnat.
+	 *
+	 * @param string Co chceme porovnat
+	 * @param string S cim to chceme porovnat
+	 * @return object
+	 */
+
 	public function where ($where = '')
 	{
 		if (!is_array ($where))
@@ -233,7 +335,21 @@ class Database extends \Opiner\Module
 	}
 
 
-	// Vkladanie novych zaznamov
+
+	/**
+	 * Pridanie noveho zaznamu
+	 *
+	 * Do tabulky (nazov predany ako prvy argument)
+	 * prida novy zaznam s hodnotami, ktore su predane
+	 * ako pole v druhom argumente. Tato metoda len vytvori
+	 * tvar SQL prikazu. Pre skutocne ulozenie tohto zaznamu
+	 * je potrebne nad objektom este zavolat metodu send().
+	 *
+	 * @param string Nazov tabulky, do ktorej pridat zaznam
+	 * @param array S akymi hodnotami
+	 * @return object
+	 */
+
 	public function insert ($table, $rows)
 	{
 		if (!is_array ($rows)) return false;
@@ -261,7 +377,21 @@ class Database extends \Opiner\Module
 	}
 
 
-	// Aktualizovanie zaznamov
+
+	/**
+	 * Aktualizovanie zaznamov
+	 *
+	 * V tabulke predanej ako prvy paramter upravi hodnoty
+	 * jednotlivych buniek na nove hodnoty predane ako pole
+	 * v druhom argumente. Tato metoda len vytvori
+	 * tvar SQL prikazu. Pre skutocne ulozenie tohto zaznamu
+	 * je potrebne nad objektom este zavolat metodu send().
+	 *
+	 * @param string Nazov tabulky, v ktorej chceme menit obsah
+	 * @param array Nove, aktualizovane hodnoty
+	 * @return object
+	 */
+
 	public function update ($table, $rows)
 	{
 		if (!is_array ($rows)) return false;
@@ -290,7 +420,18 @@ class Database extends \Opiner\Module
 	}
 
 
-	// Zoradzovanie vysledkov
+
+	/**
+	 * Ako zoradit vysledky
+	 *
+	 * Urci, podla ktorych buniek zoradit vysledky
+	 * pri vypise dat z databazy pripadne podla coho
+	 * sa orientovat pri mazani / aktualizovani zaznamov.
+	 *
+	 * @param string Nazov bunky
+	 * @return object
+	 */
+
 	public function order ($order)
 	{
 		foreach (func_get_args() as $value)
@@ -309,20 +450,46 @@ class Database extends \Opiner\Module
 	}
 
 
-	// Obmedzenie poctu vysledkov
-	public function limit ($limit = 1)
+
+	/**
+	 * Obmedzenie poctu vysledkov
+	 *
+	 * Urci maximalny mozny pocet riadkov, ktore
+	 * sa maju vratit, pripadne byt zmazane,
+	 * aktualizovane. Tato metoda moze mat aj druhy
+	 * argument a ten urci, kolko riadkov na zaciatku
+	 * vynechat a pokracovat teda az od i-teho riadku.
+	 *
+	 * @param int Maximalny pocet riadkov
+	 * @param int Kolko riadkov vynechat
+	 * @return object
+	 */
+
+	public function limit ($limit = 1, $offset = 0)
 	{
-		$array = count (func_get_args()) == 0 ? array (1) : func_get_args();
-		if (count ($array) == 2)
-		$this -> segments [] = 'LIMIT ' . max (0, intval ($array[1])) . ' OFFSET ' . max (0, intval ($array[0]));
-		else $this -> segments [] = 'LIMIT ' . max (1, intval ($array[0]));
+		$limit = max (intval ($limit), 1);
+		$offset = max (intval ($offset), 0);
+		$this -> segments [] = 'LIMIT ' . $limit . ' OFFSET ' . $offset;
 		return $this;
 	}
 
-	// Výber zaznamov
+
+
+	/**
+	 * Výber zaznamov
+	 *
+	 * Tato metoda vrati jednotlive zaznamy podla
+	 * vyskladaneho prikazu. Vysledok je vrateny ako
+	 * dvojrozmerne pole, kde na prvej urovni su jednotlive
+	 * riadky a na druhej urovni jednotlive bunky toho
+	 * riadka.
+	 *
+	 * @return array Dvojrozmerne pole vysledkov
+	 */
+
 	public function fetch ()
 	{
-		$this -> send ();
+		$this -> send (false);
 		if (false === $this -> result) return false;
 		$result = array ();
 		while ($data = $this -> result ($this -> result))
@@ -330,25 +497,56 @@ class Database extends \Opiner\Module
 		return $result;
 	}
 
-	// Výber jednej hodnoty
+
+
+	/**
+	 * Výber zaznamu
+	 *
+	 * Tato metoda vrati zaznam podla
+	 * vyskladaneho prikazu. Jednoducha premenna,
+	 * pricom ide vzdy o prvu bunku prveho riadku.
+	 *
+	 * @return mixed
+	 */
+
 	public function fetchValue ()
 	{
-		$this -> limit (1) -> send ();
+		$this -> limit (1) -> send (false);
 		if (false === $this -> result) return false;
 		$data = $this -> result ($this -> result);
 		return is_array ($data) ? current($data) : $data;
 	}
 
-	// Výber jedného riadka
+
+
+	/**
+	 * Výber zaznamov
+	 *
+	 * Tato metoda vrati jednotlive zaznamy podla
+	 * vyskladaneho prikazu. Vysledok je vrateny ako
+	 * jednoduche pole, pricom ide vzdy o prvy
+	 * mozny riadok.
+	 *
+	 * @return array Pole vysledkov
+	 */
+
 	public function fetchRow ()
 	{
-		$this -> limit (1) -> send ();
+		$this -> limit (1) -> send (false);
 		if (false === $this -> result) return false;
 		$data = $this -> result ($this -> result);
 		return $data;
 	}
 
-	// Obalenie indexov
+
+
+	/**
+	 * Obalenie nazvu tabulky
+	 *
+	 * @param string Nazov tabulky
+	 * @return string
+	 */
+
 	protected function getWrap ($index)
 	{
 		$index = explode ('/', $index);
@@ -361,7 +559,15 @@ class Database extends \Opiner\Module
 		return $this -> parseValue ($index [0]);
 	}
 
-	// Premenovanie vyberaneho pola
+
+
+	/**
+	 * Osetrenie indexu
+	 *
+	 * @param string Co chceme osetrit
+	 * @return string
+	 */
+
 	protected function parseValue ($index)
 	{
 		$index = explode ('#', $index);
@@ -370,7 +576,13 @@ class Database extends \Opiner\Module
 		return $this -> rename ($index [0]);
 	}
 
-	// Pridanie indexu tabuliek
+	/**
+	 * Dynamicke premenovanie policka
+	 *
+	 * @param string Predpis policka
+	 * @return string
+	 */
+
 	protected function rename ($index)
 	{
 		if (preg_match('#([a-z]+)\[([a-z]*?)\]#', $index, $match))
@@ -378,13 +590,22 @@ class Database extends \Opiner\Module
 		return str_replace ('~', $index, self::wrap);
 	}
 
-	// Pridanie prefixu
+
+
+	/**
+	 * Nastavenie prefixu tabuliek
+	 *
+	 * @param string Aky prefix sa bude pouzivat
+	 * @return object
+	 */
+
 	public function setPrefix ($prefix)
 	{
 		$this -> prefix = $prefix == '' ? '' : $prefix . '__';
+		return $this;
 	}
 
-	// Ziska kluce
+	/* Ziska kluce
 	protected function getKeys ($array, $key)
 	{
 		$result = array ();
@@ -454,27 +675,66 @@ class Database extends \Opiner\Module
 			$result = $this -> addData ($result, $value ['table'], $field, $data [$value ['field']], $data, $value ['field']);
 		}
 		return $result;
-	}
+	}*/
 
 
 
-	/* Po skonceni kompilovania stranky sa pekne krasne odpojime
-	 * @return self */
+	/**
+	 * Po skompilovani stranky
+	 *
+	 * Ak je uz cela stranka skompilovana, nie je potrebne
+	 * udrzovat pripojenie k MySQL servru aktivne, a takk
+	 * dojde k bezpecnemu odpojeniu.
+	 *
+	 * @return object
+	 */
 
 	public function afterCompilation ()
 	{
 		mysql_close ($this -> connection);
+		return $this;
 	}
 
 
 
-	/* Ziskaj hodnotu AUTO_INCREMENT z naposledy pridaneho zaznamu
-	 * @return int */
+	/**
+	 * Ziskaj hodnotu primarneho kluca
+	 *
+	 * Z naposledy pridaneho riadku zisti hodnotu
+	 * primarneho kluca/policka s AUTO_INCREMENT
+	 * parametrom.
+	 *
+	 * @return int
+	 * @since 0.4
+	 */
 
 	public function getAutoIncrementValue ()
 	{
 		return mysql_insert_id ($this -> connection);
 	}
-}
 
+
+
+	/**
+	 * Ziska zoznam fieldov z tabulky
+	 *
+	 * V nazvu tabulky predaneho v argumente tejto
+	 * metody ziska zoznam vsetkych fieldov spolu
+	 * s informaciami o tychto fieldov. Tato funkcia
+	 * vrati dvojrozmerne pole.
+	 *
+	 * @param string Nazov tabulky
+	 * @return array
+	 * @since 0.5
+	 */
+
+	public function getFieldList ($table)
+	{
+		$query = $this -> query ('SHOW COLUMNS FROM ' . $this -> getWrap ($this -> prefix . $table));
+		$result = [];
+		while ($data = mysql_fetch_assoc ($query))
+		$result [] = $data;
+		return $result;
+	}
+}
 ?>

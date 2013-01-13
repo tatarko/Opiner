@@ -6,7 +6,22 @@ namespace Opiner\Module;
 // Nacitavanie potrebnych funkcii
 \Opiner\Application::getFile (\Opiner\root . 'library/parser.php');
 
-// Trieda template
+
+
+/**
+ * Templatovanie stranky
+ *
+ * Opiner Framework si stavia na principoch MVC
+ * principoch, a teda ma oddelenu vykreslovaciu
+ * cast od logickej. A prave akesi rozhranie
+ * medzi tymto zabezpecuje tato trieda.
+ *
+ * @author Tomas Tatarko
+ * @since 0.2
+ * @todo Lepsie opisat dokumentaciu pre tuto triedu
+ * @todo Tutorial ako pripravovat kompatibilne .tpl subory
+ */
+
 class Template extends \Opiner\Module
 {
 
@@ -44,6 +59,8 @@ class Template extends \Opiner\Module
 			$this -> meta ($index, $value);
 			$this -> values ['site'] [$index] = $value;
 		}
+		if (isset ($this -> _settings ['meta'] ['title']))
+		$this -> title ($this -> _settings ['meta'] ['title']);
 		unset ($this -> _settings);
 		return $this;
 	}
@@ -379,9 +396,9 @@ class Template extends \Opiner\Module
 	 *	Nastavenie dát pre meta hlavičky
 	 *	Ak hodnota $value === null, tak
 	 *	dochádza k odstráneniu informácií z meta hlavičiek
-	 *	@param string index Názov/Typ údaja
-	 *	@param string value Hodnota premennej
-	 *	@return object self
+	 *	@param string Názov/Typ údaja
+	 *	@param string Hodnota premennej
+	 *	@return object
 	 */
 
 	public function meta ($index, $value = null)
@@ -399,7 +416,7 @@ class Template extends \Opiner\Module
 	/**
 	 *	Pridávanie segmentov hlavičky
 	 *	@param string segment Samotný segment
-	 *	@return object self
+	 *	@return object
 	 */
 
 	public function addsegment ($segment)
@@ -413,7 +430,7 @@ class Template extends \Opiner\Module
 	/**
 	 *	Pridávanie segmentov hlavičky
 	 *	@param string segment Samotný segment
-	 *	@return object self
+	 *	@return object
 	 */
 
 	public function addLink ($rel, $href)

@@ -4,11 +4,16 @@ namespace Opiner\Parser;
 
 
 
-/* Volanie ostatnych parserov
- * @param string $parser: Ktory parser chceme zavolat
- * @param string $value: Premenna, ktoru chceme zformatovat
- * @param string $format: Dotacne informacie pre parser
- * @return string */
+/**
+ * Volanie ostatnych parserov
+ *
+ * @param string Ktory parser chceme zavolat
+ * @param string Premenna, ktoru chceme zformatovat
+ * @param string Dotatocne informacie pre parser
+ * @return string
+ * @author Tomas Tatarko
+ * @since 0.3
+ */
 
 function call ($parser, $value, $format = null)
 {
@@ -20,9 +25,14 @@ function call ($parser, $value, $format = null)
 
 
 
-/* Zformatuje premennu do podoby, ktora moze ist do url adries
- * @param string $value: Premenna, ktoru chceme zformatovat
- * @return string */
+/**
+ * Zformatuje premennu do podoby, ktora moze ist do url adries
+ *
+ * @param string Premenna, ktoru chceme zformatovat
+ * @return string
+ * @author Tomas Tatarko
+ * @since 0.3
+ */
 
 function webalize ($value)
 {
@@ -31,11 +41,18 @@ function webalize ($value)
 
 
 
-/* Z predaneho timestampu alebo formatovaneho datumu urobi
+/**
+ * Datum vo formate
+ *
+ * Z predaneho timestampu alebo formatovaneho datumu urobi
  * vystup v pozadovanej forme
- * @param int/string $date: Datum a cas v jeho primarnych formach
- * @param string $format: Ako ho chceme vypisat?
- * @return string */
+ *
+ * @param int Datum a cas v jeho primarnych formach
+ * @param string Ako ho chceme vypisat?
+ * @return string Napriklad 13.09.2013
+ * @author Tomas Tatarko
+ * @since 0.3
+ */
 
 function date ($date, $format = '%d.%m.%Y')
 {
@@ -44,10 +61,15 @@ function date ($date, $format = '%d.%m.%Y')
 
 
 
-/* Z predaneho URL linku urobi html odkaz
- * @param string $url: Datum a cas v jeho primarnych formach
- * @param string $format: Ako ho chceme vypisat?
- * @return string */
+/**
+ * Z predaneho URL linku urobi html odkaz
+ *
+ * @param string Datum a cas v jeho primarnych formach
+ * @param string Ako ho chceme vypisat?
+ * @return string
+ * @author Tomas Tatarko
+ * @since 0.3
+ */
 
 function url ($value)
 {

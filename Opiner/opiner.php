@@ -6,7 +6,7 @@ namespace Opiner;
 // Zakladne konstanty
 const
 	name = 'Opiner',
-	version = '0.2.2',
+	version = '0.5',
 	url = 'http://tatarko.github.com/Opiner/',
 	author = 'Tomáš Tatarko',
 	authorUrl = 'http://tatarko.sk/',
@@ -17,18 +17,39 @@ const
 // Definovanie cesty k frameworku
 define ('Opiner\root', substr (str_replace ('\\', '/', __FILE__), 0, strrpos (str_replace ('\\', '/', __FILE__), '/')) . '/');
 
-
-
 // Nacitanie toho najzakladnejsieho
 require_once (root . 'class/exception.php');
-try {
-	require_once (root . 'trait/behavior.php');
-} catch (Exception $e) {
-	die ($e);
-}
+require_once (root . 'trait/behavior.php');
 
 
-// Samotna trieda aplikacie
+
+
+
+/**
+ * Korenova trieda celeho frameworku Opiner
+ * 
+ * Cely tento framework je pripraveny tak, aby na vygenerovanie celej
+ * stacilo zavolanie jedinej statickej metody v povodnom (index.php)
+ * subore stranky. Tato metoda sluzi dalej ako rozcestnik dalsich
+ * procesov pre vygenerovanie stranky. Typicky priklad zakladneho,
+ * korenoveho suboru suboru index.php.
+ *
+ * <pre>
+ * <?php
+ * 
+ * // Načítanie triedy jadra
+ * include ('Opiner/opiner.php');
+ * 
+ * // Skompilovanie vystupu
+ * Opiner\Application::compile (__FILE__, 'default');
+ *
+ * ?>
+ * </pre>
+ *
+ * @author Tomas Tatarko
+ * @since 0.2
+ */
+
 class Application {
 
 	use Behavior;
@@ -52,9 +73,21 @@ class Application {
 
 
 
-	/* Vytvorenie novej instancie Aplikacie
-	 * @param string $webRoot: Adresa suboru, cez ktory bol zavolany Opiner (__FILE__)
-	 * @param string $configFile: Nazov konfiguracneho suboru z /private/config, ktory sa ma nacitat */
+	/**
+	 * Skompilovanie samotnej stranky, rozcestnik na vsetko
+	 * 
+	 * V prvom stadiu sa definuju konstanty ciest k jednotlivym
+	 * priecinkom v ramci systemu. Nasledne sa nastavi kodovanie stranky
+	 * a zacinaju sa nacitavat subory potrebne pre spravny chod systemu.
+	 * Ak zadany parameter $configFile, pokracuje sa nacitanim konfiguracie
+	 * stranky z daneho suboru. Ako dalsie sa zacinaju nacitavat databazove
+	 * modely a ako posledne sa nacitavaju moduly. Po uspesnom prejdeni tymito
+	 * vsetkymi procesmi sa volaju metody modulov, ktore vlastne zabezpecia
+	 * samotne vygenerovanie a vyexportovanie webovej stranky.
+	 * 
+	 * @param string Adresa suboru, cez ktory bol zavolany framework Opiner (__FILE__)
+	 * @param string Nazov konfiguracneho suboru z /private/config, ktory sa ma nacitat
+	 */
 
 	public static function compile ($webRoot, $configFile = null)
 	{
@@ -74,7 +107,8 @@ class Application {
 			// Nacitanie suborov, priprava debugu
 			self::getFile (root . 'class/debug.php');
 			self::getFile (root . 'class/module.php');
-			//self::getFile (root . 'class/model.php'); TODO
+			self::getFile (root . 'class/model.php');
+			self::getFile (root . 'class/modelhandler.php');
 			self::$debug = new Debug ();
 	
 			// Načítanie konfiguracie zo súboru
@@ -87,12 +121,10 @@ class Application {
 			}
 			
 			// Nacitanie modelov #TODO
-/*
 			$dir = opendir (scripts . 'models');
 			while ($file = readdir ($dir))
 			if (substr ($file, -4) == '.php')
 			self::getFile (scripts . 'models/' . $file);
-*/
 			
 			// Predpriprava externych modulov
 			$indexes = [];
@@ -143,11 +175,18 @@ class Application {
 
 
 
-	/* Citanie/Zapis konfiguracie aplikacie
-	 * @param string $key: Nazov reprezentujuci konfiguracny hodnotu
-	 * @param string $value: Ak je zadane, nahodi sa nova hodnota konfiguracie
-	 * @param boolean $updateDb: Ma sa vykonat aj ulozenie konfiguracnej hodnoty do databazy
-	 * @return string/boolean */
+	/**
+	 * Ziskavanie alebo nastavovanie konfiguracnych hodnot stranky
+	 *
+	 * Ak tejto funkcii predany iba prvy parameter, framework vrati hodnotu
+	 * konfiguracnej hodnoty. Ak je tejto funkcii predany aj druhy parameter,
+	 * tak dochadza k zmenej konfiguracie. Od tretieho parametra zavisi,
+	 * ci bude tato zmena ulozena aj do konfiguracnej tabulky v databaze.
+	 *
+	 * @param string Unikatny nazov konfiguracnej premennej
+	 * @param mixed Hodnota konfiguracnej hodnoty
+	 * @param boolean Ulozit novu konfiguracnu hodnotu aj do databazy?
+	 */
 
 	public static function config ($key, $value = null, $updateDb = true)
 	{
@@ -160,8 +199,12 @@ class Application {
 
 
 
-	/* Vrati object reprezentujuci pozadovany modul
-	 * @param string $localname: Ktory modul ma byt vrateny */
+	/**
+	 * Callback vracajuci pozadovany modul na zaklade predaneho nazvu
+	 *
+	 * @param string Unikatny nazov pozadovaneho modulu
+	 * @return object
+	 */
 
 	public static function module ($localname)
 	{
@@ -170,8 +213,17 @@ class Application {
 
 
 
-	/* Vrati object reprezentujuci pozadovany modul
-	 * @param string $localname: Ktory modul ma byt vrateny */
+	/**
+	 * Prekladanie klucovych slov na adresy k pozadovanych suborom
+	 *
+	 * Nakolko cesty k niektorym zo systemovych suborov sa mozu casom
+	 * menit, su definovane oddelene v konstantach. Tato metoda poskytuje
+	 * moznost ziskat adresu priecinka, z ktoreho ma byt pozadovany
+	 * subor nacitany
+	 *
+	 * @param string type Typ, co potrebujeme nacitat
+	 * @return string
+	 */
 
 	public static function location ($type)
 	{

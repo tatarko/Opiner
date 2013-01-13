@@ -2,6 +2,21 @@
 
 namespace Opiner\Module;
 
+
+
+/**
+ * Routovanie aplikacie
+ *
+ * Tato trieda na zaklade adresy, z ktorej bola
+ * volana stranka vyzisti, ktory controller
+ * ma byt volany, ktora akcia spustena a taktiez
+ * sa pokusi najst zmienky o doplnkovych premennych,
+ * ktore moze stranka obsahovat.
+ *
+ * @author Tomas Tatarko
+ * @since 0.3
+ */
+
 class Router extends \Opiner\Module
 {
 
@@ -17,13 +32,13 @@ class Router extends \Opiner\Module
 
 
 
-	/*
-	 *	Konštruktor objektu, generovanie routovacej tabuľky,
-	 *	hľadanie paremetrických indexov, načítanie aktívne
-	 *	načítanej adresy stránky
-	 *	@param string route Štruktúta, podľa ktorej má byť web routovaný
-	 *	@param boolean directions Májú byť získané aj aktuálne hodnoty routovania?
-	 *	@return object self
+	/**
+	 * Spustenie modulu volanim z aplikacie
+	 *
+	 * V tejto metode sa z nastaveni tohto modulu nacita routovaci
+	 * tvar a zavola metoda run(), ktora uz rozbehne samotne routovanie
+	 *
+	 * @return object
 	 */
 
 	public function startup ()
@@ -36,13 +51,15 @@ class Router extends \Opiner\Module
 
 
 
-	/*
-	 *	Konštruktor objektu, generovanie routovacej tabuľky,
-	 *	hľadanie paremetrických indexov, načítanie aktívne
-	 *	načítanej adresy stránky
-	 *	@param string route Štruktúta, podľa ktorej má byť web routovaný
-	 *	@param boolean directions Májú byť získané aj aktuálne hodnoty routovania?
-	 *	@return object self
+	/**
+	 * Spustenie routra
+	 *
+	 * Generovanie routovacej tabuľky, hladanie paremetrickych
+	 * indexov, lustenie aktivne nacitanej adresy stranky
+	 *
+	 * @param string Predpis, podla ktoreho sa bude routovat stranka
+	 * @param boolean directions Májú byť získané aj aktuálne hodnoty routovania?
+	 * @return object
 	 */
 
 	public function run ($route, $directions = true)
@@ -69,8 +86,9 @@ class Router extends \Opiner\Module
 
 
 	/**
-	 *	Načíta aktuálne hodnoty routovania
-	 *	@return object self
+	 * Načíta aktuálne hodnoty routovania
+	 *
+	 * @return object
 	 */
 
 	public function getDirections ()
@@ -94,8 +112,9 @@ class Router extends \Opiner\Module
 
 
 	/**
-	 *	Prepočítanie adresy odkazu na základe predaných parametrov
-	 *	@return string
+	 * Prepočítanie adresy odkazu na základe predaných parametrov
+	 *
+	 * @return string
 	 */
 
 	public function route ()
@@ -130,8 +149,9 @@ class Router extends \Opiner\Module
 
 
 	/**
-	 *	Je predaný odkaz aktívne routovaným?
-	 *	@return boolean
+	 * Je predany odkaz aktivne nacitanym?
+	 *
+	 * @return boolean
 	 */
 
 	public function isActive ()
@@ -145,9 +165,10 @@ class Router extends \Opiner\Module
 
 
 	/**
-	 *	Nastavenie, či majú byť odkazy generované vrátane domény
-	 *	@param boolean complete Generovať skutočný url?
-	 *	@return object self
+	 * Nastavit, ci maju byt odkazy generovane vratane domeny
+	 *
+	 * @param boolean Ano, ci nie?
+	 * @return object
 	 */
 
 	public function completeUrl ($complete = false)
@@ -161,8 +182,15 @@ class Router extends \Opiner\Module
 
 
 	/**
-	 *	Načítanie aktuálneho view modelu
-	 *	@return object self
+	 * Metoda volana pri kompilovani stranky
+	 *
+	 * V prvej faze sa kontroluje, ci je mozne nacitat
+	 * samotny subor controllera. Ak ano, kontroluje sa,
+	 * ci nad tymto controllerom moze byt zavolana pozadovana
+	 * akcia. Ak ano, tak sa zavola a nakoniec sa do templatu
+	 * nastavi view, ktory si zvolila akcia controllera.
+	 *
+	 * @return object
 	 */
 
 	public function compile ()
@@ -193,9 +221,10 @@ class Router extends \Opiner\Module
 
 
 	/**
-	 *	Ošetrenie vstupných parametrov pre router
-	 *	@param string value Premenná na ošetrenie
-	 *	@return string
+	 * Ošetrenie vstupných parametrov pre router
+	 *
+	 * @param string Premenná na ošetrenie
+	 * @return string
 	 */
 
 	protected function controller_encode ($value)
@@ -206,9 +235,10 @@ class Router extends \Opiner\Module
 
 
 	/**
-	 *      Ošetrenie premennej pre vstup do regexpov
-	 *	@param string value Premenná na ošetrenie
-	 *	@return string
+	 * Ošetrenie premennej pre vstup do regexpov
+	 *
+	 * @param string Premenná na ošetrenie
+	 * @return string
 	 */
 
 	protected function escape ($value)
@@ -217,6 +247,13 @@ class Router extends \Opiner\Module
 	}
 
 
+
+	/**
+	 * Ziskanie SEO-friendly tvaru parametra
+	 *
+	 * @param mixed Parameter, ktory chceme osetrit
+	 * @return string
+	 */
 
 	protected function webalize ($value)
 	{

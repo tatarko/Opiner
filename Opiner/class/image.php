@@ -2,6 +2,21 @@
 
 namespace Opiner;
 
+
+
+/**
+ * Spracovanie obrazkov
+ *
+ * Tato jednoducha trieda sluzi na pracu s obrazkami.
+ * V aktualnej verzii ponuka moznost zmensit obrazok
+ * na presne zadany rozmer a to bez deformovania pomeru
+ * vysky a sirky (vdaka orezavaniu). Dalsou funkciou je
+ * ulozenie obrazka do suboru alebo vystup do prehliadaca.
+ *
+ * @author Tomas Tatarko
+ * @since 0.4
+ */
+
 class Image
 {
 
@@ -23,9 +38,15 @@ class Image
 
 
 	/**
-	 *	Vytvorenie objektu, určenie základných premenných
-	 *	@param string name Fyzická adresa obrázka
-	 *	@return object self
+	 * Vytvorenie objektu, určenie základných premenných
+	 *
+	 * Pri vytvarani obrazka sa automaticky zistia informacie
+	 * o tomto obrazku - ako napriklad rozmery, koncovka, MIME
+	 * type. Zaroven sa trieda automaticky pokusi
+	 * otvorit obrazok a ulozit ho do lokalnej palety.
+	 *
+	 * @param string Fyzická adresa obrázka
+	 * @return object
 	 */
 
 	public function __construct ($filename)
@@ -58,13 +79,17 @@ class Image
 
 
 	/**
-	 *      Zmenšenie na presné zadané rozmery, pokiaľ pôvodný
-	 *      obrázok nemá taký pomer šírky a výšky, bude orezaný
-	 *      @param int width Šírka zmenšeného obrázka
-	 *      @param int height Výška zmenšeného obrázka
-	 *      @param string filename Kam uložiť zmenšený obrázok
-	 *      @param boolean filename Default hodnota false, obrázok sa zmenší iba v rámci objektu
-	 *      @return object self
+	 * Zmenšenie obrazku
+	 *
+	 * Inteligentne zmensenie obrazku na presne zadane rozmery.
+	 * Pri tomto zmenseni nedochadza k roztiahnutiu obrazu sposobene
+	 * rozlicnym pomerom sirky a vysky. Ak je tento pomer iny ako original
+	 * obrazku, tak sa radsej zrezu okraje.
+	 *
+	 * @param int Šírka zmenšeného obrázka
+	 * @param int Výška zmenšeného obrázka
+	 * @param string Kam uložiť zmenšený obrázok
+	 * @return object
 	 */
 
 	public function resize ($width, $height, $filename = false)
@@ -107,10 +132,14 @@ class Image
 
 
 	/**
-	 *      Výsledné vygenerovanie obrázka z kreslacieho plátna
-	 *      @param string filaname Kam uložiť obrázok
-	 *      @param boolean false filename Ak má byť obrázok vykreslený do prehliadača
-	 *      @return object self
+	 * Vygenerovanie obrázka z kreslacieho plátna
+	 *
+	 * Tato funkcia ma jeden jediny argument, ktory
+	 * ak je vynechany, tak dochadza k odoslaniu
+	 * obrazku do prehliadaca uzivatela.
+	 *
+	 * @param string Kam uložiť obrázok
+	 * @return object
 	 */
 
 	public function output ($filename = false)
@@ -124,6 +153,58 @@ class Image
 			case 'gif': imagegif ($this -> palette, $filename);
 		}
 		return $this;
+	}
+
+
+
+	/**
+	 * Vrati aktualnu sirku obrazka
+	 * @return int
+	 * @since 0.5
+	 */
+
+	public function getWidth ()
+	{
+		return $this -> width;
+	}
+
+
+
+	/**
+	 * Vrati aktualnu vysku obrazka
+	 * @return int
+	 * @since 0.5
+	 */
+
+	public function getHeight ()
+	{
+		return $this -> height;
+	}
+
+
+
+	/**
+	 * Vrati koncovku suboru obrazka
+	 * @return string
+	 * @since 0.5
+	 */
+
+	public function getSuffix ()
+	{
+		return $this -> suffix;
+	}
+
+
+
+	/**
+	 * Vrati mime typ obrazku
+	 * @return string
+	 * @since 0.5
+	 */
+
+	public function getType ()
+	{
+		return $this -> type;
 	}
 }
 ?>

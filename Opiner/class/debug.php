@@ -2,21 +2,59 @@
 
 namespace Opiner;
 
+
+
+/**
+ * Debugovanie frameworku
+ *
+ * Tato trieda sluzi programatorovi, ktory pracuje s frameworkom
+ * na podanie tych spravnych informacii o behu a kompilacii kodu
+ *
+ * @author Tomas Tatarko
+ * @since 0.4
+ */
+
 class Debug
 {
 
+	protected
+		$start = 0,
+		$localhost = false;
 
+
+
+	/**
+	 * Vytvorenie objektu
+	 *
+	 * V tejto metode dochadza k prepocitaniu
+	 * zakladnych premennych tohto objektu. Urci sa pociatocny
+	 * cas kompilacie a zaroven sa zisti, ci framework bezi
+	 * na localhoste alebo nie.
+	 *
+	 * @return object
+	 */
 
 	public function __construct ()
 	{
 		$this -> start = microtime (true);
 		$this -> localhost = substr (remote, 0, 17) == 'http://localhost/' ? true : false;
+		return $this;
 	}
 
 
 
-	/* Vystup debuggera
-	 * @return self */
+	/**
+	 * Vystup debuggera
+	 *
+	 * Do prehliadaca prida do spodnej pravej casti
+	 * malu listu, v ktorej sa zobrazia zakladne informacie
+	 * o tom, ako zbehlo skompilovanie stranky. Okrem toho
+	 * este prida na koniec stranky (do HTML zdrojoveho
+	 * kodu) komentar s detailnym vypisom vsetkych nacitanych
+	 * suborov, tried, ...
+	 *
+	 * @return string
+	 */
 
 	public function __toString ()
 	{

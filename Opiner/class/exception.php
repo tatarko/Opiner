@@ -3,10 +3,38 @@
 namespace Opiner;
 
 
-// Trieda template
+
+/**
+ * Trieda pre vynimky systemu
+ *
+ * Ide o triedu odvodenu od zakladnej PHP triedy Exception.
+ * Oproti nej ma obmenenu metodu __toString a to na taku formu,
+ * aby programatorovi poskytla detailnejsi opis chyby. Podla
+ * moznosti vyuziva aj nacitany modul prekladu a chybove hlasky
+ * prelozi do lokalnej reci. Ak je framework spusteny na lokalnom
+ * servri, tak prida aj backtrace pre rychlejsie identifikovanie,
+ * kde k chybe vlastne doslo.
+ *
+ * @author Tomas Tatarko
+ * @since 0.4
+ */
+
 class Exception extends \Exception
 {
 
+
+
+	/**
+	 * Vystup do textovej verzie.
+	 *
+	 * Kedze v pripade, ze dojde k odoslaniu vynimky,
+	 * tak system ju spracuje sposobom die ($exception)
+	 * a preto je potrebne vystup tejto vynimky
+	 * odoslat ako string.
+	 *
+	 * @return string
+	 */
+	
 	public function __toString ()
 	{
 		switch ($this -> getCode ())
@@ -105,6 +133,18 @@ class Exception extends \Exception
 
 
 
+	/**
+	 * Ziskaj lokalizovanu frazu
+	 *
+	 * Ak uz bol nacitany modul prekladu stranok a aj obsahuje
+	 * hladanu frazu, tak tato metoda vrati prelozeny text.
+	 * V opacnom pripade vrati pevne stavoveny text (v anglickom
+	 * jazyku).
+	 *
+	 * @param string Kluc prekladovej frazy
+	 * @return string Prelozena fraza
+	 */
+
 	protected static function getLocalMessage ($message)
 	{
 		if (Application::module ('language')
@@ -134,6 +174,19 @@ class Exception extends \Exception
 
 
 
+	/**
+	 * Nacitaj blok kodu zo suboru
+	 *
+	 * Zo suboru predaneho ako argument tejto metody nacita blok
+	 * maximalne desiatich riadkov z okolia riadku, na ktorom
+	 * bol volany prikaz v ramci backtrace. Tento zdrojovy
+	 * kod nasledne obali do <code>&lt;pre&gt;</code> tagu.
+	 *
+	 * @param string Adresa suboru
+	 * @param int Riadok, z ktoreho okolia nacitat zdrojovy kod
+	 * @return string
+	 */
+
 	protected static function getCodeFromFile ($file, $line)
 	{
 		$lines = explode (PHP_EOL, file_get_contents ($file));
@@ -145,6 +198,5 @@ class Exception extends \Exception
 		$return .= ($i + 1) . ':  ' . $lines [$i] . PHP_EOL;
 		return $return .= '</pre>';
 	}
-
 }
 ?>

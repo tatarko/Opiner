@@ -2,6 +2,23 @@
 
 namespace Opiner\Module;
 
+
+
+/**
+ * Generovanie a praca s menu stranky
+ *
+ * Tato trieda ponuka rozhranie na jednoduchu
+ * tvorbu a spracovanie roznych menu v ramci stranky.
+ * Jednotlive menu mozu byt v troch roznych druhoch:
+ * - box (obsahuje odkazy pripadne pevny html obsah)
+ * - stack (zoskupenie viacerych boxov)
+ * - breadcrumbs (odkazy na urcenie aktualnej polohy
+ *   v ramci webu)
+ *
+ * @author Tomas Tatarko
+ * @since 0.4
+ */
+
 class Menu extends \Opiner\Module
 {
 	protected
@@ -16,10 +33,15 @@ class Menu extends \Opiner\Module
 
 
 
-	/* Trieda na zaobstaranie cachovania premennych
-	 * @param string $cacheFile: Do ktoreho suboru sa maju ulozit cache premennych
-	 * @param string $cacheFolder: Priecinok, do ktoreho sa maju ukladat ostatne cache
-	 * @return object self */
+	/**
+	 * Spustenie modulu ako volanie aplikacie
+	 *
+	 * V tomto kroku sa pripravi vnutorna struktura vsetkych
+	 * jednotlivych menu na zaklade parametrov predanych
+	 * v konfiguracii frameworku.
+	 *
+	 * @return object
+	 */
 
 	public function startup ()
 	{
@@ -30,9 +52,17 @@ class Menu extends \Opiner\Module
 
 
 
-	/* Vytvori strukturu menu podla predaneho pola
-	 * @param array $settings: Ake menu sa maju vytvorit
-	 * @return object self */
+	/**
+	 * Pripravi vnutornu strukturu vsetkych menu
+	 *
+	 * Postupne prechadza vsetkymi menu, ktore su
+	 * spomenute v nastaveniach predanych ako prvy
+	 * argument tejto metody a podla tejto konfiguracie
+	 * pridava boxy, stacky, breadcrumby.
+	 * 
+	 * @param array Pole nastaveni
+	 * @return object
+	 */
 
 	public function prepare ($settings)
 	{
@@ -57,10 +87,13 @@ class Menu extends \Opiner\Module
 
 
 
-	/* Pridanie noveho boxu
-	 * @param array $params: Parametre daneho boxu
-	 * @param string $into: Do ktoreho stacku ho vlozit
-	 * @return object self */
+	/**
+	 * Pridanie noveho boxu
+	 *
+	 * @param array Parametre daneho boxu
+	 * @param string Do ktoreho stacku ho vlozit
+	 * @return object
+	 */
 
 	public function addBox ($params, $into = null)
 	{
@@ -91,9 +124,12 @@ class Menu extends \Opiner\Module
 
 
 
-	/* Pridanie noveho stacku
-	 * @param array $params: Parametre daneho stacku
-	 * @return object self */
+	/**
+	 * Pridanie noveho stacku
+	 *
+	 * @param array Parametre daneho stacku
+	 * @return object
+	 */
 
 	public function addStack ($params)
 	{
@@ -117,9 +153,16 @@ class Menu extends \Opiner\Module
 
 
 
-	/* Nastavi, ci sa ma riesit breadcrumbs menu
-	 * @param boolean $state
-	 * @return object self */
+	/**
+	 * Prida novy odkaz
+	 *
+	 * @param string Text odkazu
+	 * @param string Adresa odkazu
+	 * @param string Popisok odkazu
+	 * @param int Pozicia odkazu medzi ostatnymi
+	 * @param string Do ktoreho boxu odkaz patri?
+	 * @return object
+	 */
 
 	public function addLink ($title, $url = null, $description = null, $position = null, $into = null)
 	{
@@ -140,11 +183,14 @@ class Menu extends \Opiner\Module
 
 
 
-	/* Prida novu omrvinku
-	 * @param string $title: Text odkazu
-	 * @param string $url: Adresa, kam smeruje odkaz
-	 * @param string $description: Popisok odkazu
-	 * @return object self */
+	/**
+	 * Prida novu omrvinku
+	 *
+	 * @param string Text odkazu
+	 * @param string Adresa, kam smeruje odkaz
+	 * @param string Popisok odkazu
+	 * @return object
+	 */
 
 	public function addBreadcrumb ($title, $url = null, $description = null)
 	{
@@ -161,9 +207,12 @@ class Menu extends \Opiner\Module
 
 
 
-	/* Nastavi, ci sa ma riesit breadcrumbs menu
-	 * @param boolean $state
-	 * @return object self */
+	/**
+	 * Nastavi, ci sa ma riesit breadcrumbs menu
+	 *
+	 * @param boolean Ano, ci nie?
+	 * @return object
+	 */
 
 	public function setBreadcrumbsState ($state = false)
 	{
@@ -174,9 +223,16 @@ class Menu extends \Opiner\Module
 
 
 
-	/* Nastavi aktivny box, do ktoreho sa nasledne budu vkladat odkazy
-	 * @param boolean $name: Unikatny nazov aktivneho boxu
-	 * @return object self */
+	/**
+	 * Nastavi aktivny box
+	 *
+	 * Do tohto boxu sa budu nasledne vkladat
+	 * vsetky dalsie odkazy, az kym nebude tato metoda zavolana
+	 * s prazdnym prvym argumentom
+	 *
+	 * @param string Unikatny nazov aktivneho boxu
+	 * @return object
+	 */
 
 	public function setActiveBox ($name = null)
 	{
@@ -186,9 +242,16 @@ class Menu extends \Opiner\Module
 
 
 
-	/* Nastavi aktivny stack, do ktoreho sa nasledne budu vkladat boxy
-	 * @param boolean $name: Unikatny nazov aktivneho stacku
-	 * @return object self */
+	/**
+	 * Nastavi aktivny stack
+	 *
+	 * Do tohto stacku budu pridavane vsetky nasledujuce boxy,
+	 * az kym nebude tato metoda zavolana znova, no uz bez
+	 * prveho argumentu.
+	 *
+	 * @param string Unikatny nazov aktivneho stacku
+	 * @return object
+	 */
 
 	public function setActiveStack ($name = null)
 	{
@@ -198,8 +261,16 @@ class Menu extends \Opiner\Module
 
 
 
-	/* Samotna kompilacia menu, prehodenie do template modulu
-	 * @return object self */
+	/**
+	 * Nahodenie menu do templatu
+	 *
+	 * V dobe, ked stranka prechadza do fazy kompilovania,
+	 * tak vsetky boxy, stacky a breadcrumby sa pekne krasne
+	 * vlozia do aktivneho templatu. Odkazy, ktore sa nenachadzaju
+	 * v ziadnom z boxov budu zahodene.
+	 *
+	 * @return object
+	 */
 
 	public function compile ()
 	{
@@ -233,3 +304,4 @@ class Menu extends \Opiner\Module
 		return $this;
 	}
 }
+?>

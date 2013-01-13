@@ -2,21 +2,42 @@
 
 namespace Opiner\Module;
 
+
+
+/**
+ * Cachovanie hodnot
+ *
+ * Pomocou tohto modulu moze programator velmi jednoduchou
+ * formou cachovat urcite premenne. Cachovat pri tom
+ * znamena ulozit vysledok nejakej funkcie na urcitu
+ * dobu. Pri najblizsom spusteni stranky tak tato
+ * funkcia nemusi byt spustana, a to jednak odlahsi
+ * zataz hardwaru a prispeje to aj k rychlejsiemu
+ * nacitaniu webovej stranky.
+ *
+ * @author Tomas Tatarko
+ * @since 0.4
+ */
+
 class Cache extends \Opiner\Module
 {
 	
 	protected
 		$cacheFolder,
 		$cacheFile,
-		$imageCacheData,
 		$values = [];
 
 
 
-	/* Trieda na zaobstaranie cachovania premennych
-	 * @param string $cacheFile: Do ktoreho suboru sa maju ulozit cache premennych
-	 * @param string $cacheFolder: Priecinok, do ktoreho sa maju ukladat ostatne cache
-	 * @return object self */
+	/**
+	 * Spustanie modulu volanim z compile() metody aplikacie
+	 *
+	 * Tato metoda sposobi samotne spustenie cache metody
+	 * a taktiez aj odstrani uz presluhujuce premenne, ktorym
+	 * vyprsala expiracia.
+	 *
+	 * @return object
+	 */
 
 	public function startup ()
 	{
@@ -27,10 +48,18 @@ class Cache extends \Opiner\Module
 
 
 
-	/* Trieda na zaobstaranie cachovania premennych
-	 * @param string $cacheFile: Do ktoreho suboru sa maju ulozit cache premennych
-	 * @param string $cacheFolder: Priecinok, do ktoreho sa maju ukladat ostatne cache
-	 * @return object self */
+	/**
+	 * Spustenie cache modulu
+	 *
+	 * V prvej faze tejto metody sa nastavia premmne a odkontroluje
+	 * sa, ci cache priecinok existuje. Ak nie, tak sa vyhodi vynimka,
+	 * co sposobi ukoncenie kompilovania frameworku. Nakoniec aj existuje
+	 * aj cache subor, tak sa z neho nacitaju premmne.
+	 *
+	 * @param string Do ktoreho suboru sa maju ulozit cache premenne
+	 * @param string Priecinok, do ktoreho sa maju ukladat ostatne cache
+	 * @return object
+	 */
 
 	public function run ($cacheFile = null, $cacheFolder = null)
 	{
@@ -50,8 +79,15 @@ class Cache extends \Opiner\Module
 
 
 
-	/* Odstrani cache hodnoty, ktore su uz po dobe spotreby
-	 * @return object self */
+	/**
+	 * Odstrani stare cache premenne
+	 *
+	 * Tato metoda prebehne vsetkymi cache premennymi,
+	 * skontroluje, ktorym vyprasala expiracia a tie
+	 * vymaze.
+	 *
+	 * @return object
+	 */
 
 	protected function chechOldValues ()
 	{
@@ -64,8 +100,14 @@ class Cache extends \Opiner\Module
 
 
 
-	/* Po skompilovani stranky ulozime hodnoty pekne krasne do suboru
-	 * @return object self */
+	/**
+	 * Po skompilovani stranky
+	 *
+	 * Ak je uz cela stranka skompilovana, ulozia sa
+	 * cache hodnoty tohto modulu do suboru.
+	 *
+	 * @return object
+	 */
 
 	public function afterCompilation ()
 	{
@@ -82,11 +124,28 @@ class Cache extends \Opiner\Module
 
 
 
-	/* Ukladanie a ziskavania cache hodnot
-	 * @param string $key: Kluc k zacachovanej hodnote
-	 * @param mixed $value: Nova hodnota cachovanej hodnoty
-	 * @param int $valid: Dokedy ma byt cache aktivna?
-	 * @return mixed: Hodnotu cache pripadne object:self */
+	/**
+	 * Ziskavanie/ukladanie cache hodnoty
+	 *
+	 * Podla toho, kolko argumentov je predanych tejto metode
+	 * sposobuje bud vyhladanie a vratenie cachovanej premennej
+	 * alebo prida hodnotu do cache pamete.
+	 *
+	 * Ak je predany len jeden argument, tak premenna s takymto
+	 * klucom sa bude vyhladavat a pripadne sa vrati (ak nie je
+	 * cachovana, vrati null).
+	 *
+	 * Ak je zadany aj druhy argument, tak cache hodnota sa ulozi
+	 * do pamete a bude pristupna pod unikatnym nazvom zvolenym
+	 * ako prvy argument tejto metody. Treti volitelny parameter
+	 * moze nastavit presny cas, kedy ma skoncit platnost tejto cache
+	 * hodnoty.
+	 *
+	 * @param string Kluc k zacachovanej hodnote
+	 * @param mixed Nova hodnota cachovanej hodnoty
+	 * @param int Dokedy ma byt cache aktivna (timestamp)
+	 * @return mixed Hodnotu cache alebo object:self
+	 */
 
 	public function cache ($key, $value = null, $valid = 0)
 	{
@@ -115,9 +174,12 @@ class Cache extends \Opiner\Module
 
 
 
-	/* Zisti, kedy cachovanie hodnoty skonci
-	 * @param string $key: Kluc k zacachovanej hodnote
-	 * @return int: Timestamp casu */
+	/**
+	 * Zisti, kedy cachovanie hodnoty skonci
+	 *
+	 * @param string Kluc k zacachovanej hodnote
+	 * @return int Timestamp casu
+	 */
 
 	public function getExpirationTime ($key)
 	{
@@ -126,9 +188,12 @@ class Cache extends \Opiner\Module
 
 
 
-	/* Zisti, kedy cachovanie hodnoty zacalo
-	 * @param string $key: Kluc k zacachovanej hodnote
-	 * @return int: Timestamp casu */
+	/**
+	 * Zisti, kedy cachovanie hodnoty zacalo
+	 *
+	 * @param string Kluc k zacachovanej hodnote
+	 * @return int Timestamp casu
+	 */
 
 	public function getCreateTime ($key)
 	{
@@ -137,9 +202,12 @@ class Cache extends \Opiner\Module
 
 
 
-	/* Zisti, kedy bolo cachovanie hodnoty naposledy zmenene
-	 * @param string $key: Kluc k zacachovanej hodnote
-	 * @return int: Timestamp casu */
+	/**
+	 * Zisti, kedy bolo cachovanie hodnoty naposledy zmenene
+	 *
+	 * @param string Kluc k zacachovanej hodnote
+	 * @return int Timestamp casu
+	 */
 
 	public function getModifyTime ($key)
 	{
@@ -148,9 +216,12 @@ class Cache extends \Opiner\Module
 
 
 
-	/* Zisti, ako dlho cache existuje
-	 * @param string $key: Kluc k zacachovanej hodnote
-	 * @return int: Timestamp casu */
+	/**
+	 * Zisti, ako dlho cache existuje
+	 *
+	 * @param string Kluc k zacachovanej hodnote
+	 * @return int Timestamp casu
+	 */
 
 	public function getCacheAge ($key)
 	{
@@ -159,9 +230,12 @@ class Cache extends \Opiner\Module
 
 
 
-	/* Zisti, ako dlho cache nebola menena
-	 * @param string $key: Kluc k zacachovanej hodnote
-	 * @return int: Timestamp casu */
+	/**
+	 * Zisti, ako dlho cache nebola menena
+	 *
+	 * @param string Kluc k zacachovanej hodnote
+	 * @return int Timestamp casu
+	 */
 
 	public function getCacheModifiedAge ($key)
 	{
@@ -170,9 +244,12 @@ class Cache extends \Opiner\Module
 
 
 
-	/* Odstrani cache hodnotu z inventara
-	 * @param string $key: Kluc k zacachovanej hodnote
-	 * @return object self */
+	/**
+	 * Odstrani cache hodnotu z inventara
+	 *
+	 * @param string Kluc k zacachovanej hodnote
+	 * @return object
+	 */
 
 	public function dropCache ($key)
 	{
@@ -180,3 +257,4 @@ class Cache extends \Opiner\Module
 		return $this;
 	}
 }
+?>

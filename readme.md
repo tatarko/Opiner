@@ -9,7 +9,7 @@
 
 ## Dokumentácia
 
-* Technická dokumentácia generovaná na základe skriptovacích súborov (a komentárov) je dostupná na adrese [doc.opiner.sk](http://doc.opiner.sk/).
+* Technická dokumentácia generovaná na základe skriptovacích súborov (a komentárov) je dostupná na adrese [doc.tatarko.sk](http://doc.tatarko.sk/).
 * Dokumentácia pre začinajúcich programatórov sa objaví v dohľadnej dobe.
 
 ## Roadmap

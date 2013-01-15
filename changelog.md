@@ -1,6 +1,15 @@
 # Opiner
 ## Changelog
 
+### Opiner 0.6
+* (rozpracovane, este budu pribudat zmeny pred vydanim)
+* Hlavna trieda Application globalne premenova na Framework
+* Pri module Database aj triede Model pribudla nova metoda delete()
+* Pri vybere dat z databazy (aj pri modeloch) je mozne vysledky vyexportovat do JSON a CSV formatu.
+* Moznost opakovaneho kompilovania frameworku v ramci jedneho nehu skriptu.
+* Moznost zmenit cestu k private suborom.
+* Kompilovanie frameworku uz nevyzaduje ziadne parametre.
+
 ### Opiner 0.5
 * Weekly Build #5
 * Dokoncenie rozhrania modelov (ORM/ActiveRecord).

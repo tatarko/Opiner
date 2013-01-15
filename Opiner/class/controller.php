@@ -40,10 +40,10 @@ abstract class Controller
 
 	public function __construct ()
 	{
-		$this -> db = Application::module ('database');
-		$this -> temp = Application::module ('template');
-		$this -> menu = Application::module ('menu');
-		$this -> cache = Application::module ('cache');
+		$this -> db = Framework::module ('database');
+		$this -> temp = Framework::module ('template');
+		$this -> menu = Framework::module ('menu');
+		$this -> cache = Framework::module ('cache');
 		return $this;
 	}
 
@@ -53,7 +53,7 @@ abstract class Controller
 	 * Vrati pozadovany modul
 	 *
 	 * Tato metoda je viac menej odkazom na rovnomennu metodu
-	 * triedy Application
+	 * triedy Framework
 	 * 
 	 * @param string Unikatny nazov modulu, ktory chceme nacitat
 	 * @return object
@@ -61,7 +61,7 @@ abstract class Controller
 
 	protected static function module ($localName)
 	{
-		return Application::module ($localName);
+		return Framework::module ($localName);
 	}
 
 
@@ -82,7 +82,7 @@ abstract class Controller
 
 	protected static function t ($key)
 	{
-		return Application::module ('language') -> translate (func_get_args ());
+		return Framework::module ('language') -> translate (func_get_args ());
 	}
 
 
@@ -101,7 +101,7 @@ abstract class Controller
 
 	protected static function l ()
 	{
-		return Application::module ('router') -> route (func_get_args ());
+		return Framework::module ('router') -> route (func_get_args ());
 	}
 
 
@@ -118,7 +118,7 @@ abstract class Controller
 
 	protected static function addBox ($name, $title = null, $into = null)
 	{
-		return Application::module ('menu') -> addBox ([
+		return Framework::module ('menu') -> addBox ([
 			'name'	=> $name,
 			'title'	=> $title,
 			'into'	=> $into
@@ -138,7 +138,30 @@ abstract class Controller
 
 	protected static function addLink ($title, $url)
 	{
-		return Application::module ('menu') -> addLink (func_get_args ());
+		return Framework::module ('menu') -> addLink (func_get_args ());
+	}
+
+
+
+	/**
+	 * Volanie modelu
+	 *
+	 * Tato metoda sa pokusi zavolat model, ktoreho
+	 * nazov je predany ako prvy argument. Ak sa tento
+	 * model nenajde, vyhodi sa vynimka a ukonci sa
+	 * kompilovania stranky.
+	 *
+	 * @param string Aky model chcem
+	 * @return object
+	 * @since 0.6
+	 */
+
+	protected static function model ($model)
+	{
+		$name = '\\Opiner\\Model\\' . $model;
+		if (!class_exists ($name))
+		throw new Exception ($model, 302);
+		return $name::model ();
 	}
 }
 ?>

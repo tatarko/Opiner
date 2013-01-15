@@ -34,16 +34,16 @@ trait Behavior {
 	 * @return boolean
 	 */
 
-	public static function error ($string, $level = toDie)
+	public static function error ($string, $level = Framework::errorToDie)
 	{
 		switch ($level)
 		{
-			case toLog:
-				Application::$log ['errors'] [] = $string;
+			case Framework::errorToLog:
+				Framework::$log ['errors'] [] = $string;
 				return true;
 				break;
 
-			case toReturn: return false;
+			case Framework::errorToReturn: return false;
 			default: throw new Exception ($string);
 		}
 	}
@@ -63,10 +63,10 @@ trait Behavior {
 	 * @return boolean
 	 */
 
-	public static function isFile ($file, $level = toReturn)
+	public static function isFile ($file, $level = Framework::errorToReturn)
 	{
 		if (file_exists ($file)) return true;
-		else return self::error ('File "' . $file . '" has not been found!', $level);
+		else return static::error ('File "' . $file . '" has not been found!', $level);
 	}
 
 

@@ -62,7 +62,7 @@ class ModelHandler
 		$this -> primaryKey = $primaryKey;
 		
 		if (!class_exists ($this -> className))
-		throw new Exception (303, $this -> tableName);
+		throw new Exception ($this -> tableName, 302);
 		
 		foreach (get_class_methods ($this -> className) as $method)
 		if (substr ($method, 0, 5) == 'scope' and $method !== 'scope')
@@ -91,7 +91,7 @@ class ModelHandler
 	{
 		$method = strtolower ($method);
 		if (!isset ($this -> scopes [$method]))
-		throw new Exception (304, $method, $this -> tableName);
+		throw new Exception ($method . '|' . $this -> tableName, 303);
 		
 		foreach ($params as $index => $value)
 		$params [$index] = var_export ($value, true);
@@ -125,7 +125,7 @@ class ModelHandler
 		{
 			$field = substr ($index, 0, strpos ($index, '#'));
 			if (!isset ($this -> fields [$index]))
-			throw new Exception (305, $index, $this -> tableName);
+			throw new Exception ($index, 300);
 			$this -> conditions [] = [$index, $value];
 		}
 		return $this;
@@ -267,7 +267,7 @@ class ModelHandler
 	public function order ($field, $by = 'asc')
 	{
 		if (!isset ($this -> fields [$field]))
-		throw new Exception (305, $index, $this -> tableName);
+		throw new Exception ($index, 305, $this -> tableName);
 		$this -> order = $field . '#' . $by;
 		return $this;
 	}
@@ -287,7 +287,7 @@ class ModelHandler
 
 	public function findByPk ($id)
 	{
-		if(!$data = Application::module ('database')
+		if(!$data = Framework::module ('database')
 			-> select ()
 			-> table ($this -> tableName)
 			-> where (array_merge ($this -> conditions, [$this -> primaryKey => $id]))
@@ -314,14 +314,101 @@ class ModelHandler
 	public function find ()
 	{
 		$return = [];
-		foreach (Application::module ('database')
+		foreach (Framework::module ('database')
 			-> select ()
 			-> table ($this -> tableName)
-			-> where (array_merge ($this -> conditions, [$this -> primaryKey => $id]))
-			-> order ($this -> primaryKey)
+			-> where ($this -> conditions)
+			-> order ($this -> order)
+			-> limit ($this -> limit, $this -> offset)
 			-> fetch () as $row)
 		$return [] = new $this -> className ($row);
 		return $return;
+	}
+
+
+
+	/**
+	 * Vrati vsetky zaznamy ako JSON
+	 *
+	 * Tato metoda zoberie vsetky mozne vysledne riadky
+	 * a zakoduje ich do JSON kodu, ktory moze byt dalej pouzity.
+	 *
+	 * @return string
+	 * @since 0.6
+	 */
+
+	public function getAsJson ()
+	{
+		$query = Framework::module ('database')
+			-> select ()
+			-> table ($this -> tableName);
+		if (!empty ($this -> conditions)) $query -> where ($this -> conditions);
+		if (!empty ($this -> order)) $query -> order ($this -> order);
+		return $query -> limit ($this -> limit, $this -> offset) -> fetchAsJson ();
+	}
+
+
+
+	/**
+	 * Ulozi vsetky zaznamy do json suboru
+	 *
+	 * Do suboru, ktoreho adresa je predana v prvom
+	 * argumente tejto metody sa ulozi JSON so vsetkymi
+	 * riadkami, ktore vyhovuju navolenych podmienkam
+	 *
+	 * @param string Adresa suboru, do ktoreho sa maju zapisat data
+	 * @return object
+	 * @since 0.6
+	 */
+
+	public function getIntoJsonFile ($file)
+	{
+		file_put_contents ($file, $this -> getAsJson ());
+		return $this;
+	}
+
+
+
+	/**
+	 * Vrati vsetky zaznamy ako CSV
+	 *
+	 * Tato metoda zoberie vsetky mozne vysledne riadky
+	 * a zakoduje ich do CSV kodu, ktory moze byt dalej pouzity.
+	 *
+	 * @param string Retazec oddelujuci bunky v ramci riadku
+	 * @return string
+	 * @since 0.6
+	 */
+
+	public function getAsCsv ($delimiter = ';')
+	{
+		$query = Framework::module ('database')
+			-> select ()
+			-> table ($this -> tableName);
+		if (!empty ($this -> conditions)) $query -> where ($this -> conditions);
+		if (!empty ($this -> order)) $query -> order ($this -> order);
+		return $query -> limit ($this -> limit, $this -> offset) -> fetchAsCsv ($delimiter);
+	}
+
+
+
+	/**
+	 * Ulozi vsetky zaznamy do csv suboru
+	 *
+	 * Do suboru, ktoreho adresa je predana v prvom
+	 * argumente tejto metody sa ulozi struktura so vsetkymi
+	 * riadkami, ktore vyhovuju navolenych podmienkam
+	 *
+	 * @param string Adresa suboru, do ktoreho sa maju zapisat data
+	 * @param string Retazec oddelujuci jednotlive bunky v ramci riadku
+	 * @return object
+	 * @since 0.6
+	 */
+
+	public function getIntoCsvFile ($file, $delimiter = ';')
+	{
+		file_put_contents ($file, $this -> getAsCsv ($delimiter));
+		return $this;
 	}	
 }
 ?>

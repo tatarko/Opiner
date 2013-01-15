@@ -46,7 +46,7 @@ class Exception extends \Exception
 
 			case 102:
 				$message = $this -> getLocalMessage ('errors.missingConfig', ucfirst ($this -> getMessage ()));
-				$required = Application::location ('config', $this -> getMessage ());
+				$required = Framework::location ('config', $this -> getMessage ());
 				break;
 
 			case 103:
@@ -55,12 +55,12 @@ class Exception extends \Exception
 
 			case 110:
 				$message = $this -> getLocalMessage ('errors.missingModuleFile', ucfirst ($this -> getMessage ()));
-				$required = Application::location ('modules', $this -> getMessage ());
+				$required = Framework::location ('modules', $this -> getMessage ());
 				break;
 
 			case 111:
 				$message = $this -> getLocalMessage ('errors.missingModule', ucfirst ($this -> getMessage ()));
-				$required = Application::location ('modules', $this -> getMessage ());
+				$required = Framework::location ('modules', $this -> getMessage ());
 				break;
 
 			case 200:
@@ -77,7 +77,7 @@ class Exception extends \Exception
 
 			case 210:
 				$message = $this -> getLocalMessage ('errors.modules.router.controllerFile', ucfirst ($this -> getMessage ()));
-				$required = Application::location ('controller', $this -> getMessage ());
+				$required = Framework::location ('controller', $this -> getMessage ());
 				break;
 
 			case 220:
@@ -86,13 +86,13 @@ class Exception extends \Exception
 
 			case 211:
 				$message = $this -> getLocalMessage ('errors.modules.router.controller', ucfirst ($this -> getMessage ()));
-				$required = Application::location ('controller', $this -> getMessage ());
+				$required = Framework::location ('controller', $this -> getMessage ());
 				break;
 
 			case 212:
 				list ($controller, $action) = explode ('|', $this -> getMessage ());
 				$message = $this -> getLocalMessage ('errors.modules.router.action', ucfirst ($controller), ucfirst ($action));
-				$required = Application::location ('controller', $controller);
+				$required = Framework::location ('controller', $controller);
 				break;
 
 			case 221:
@@ -105,6 +105,23 @@ class Exception extends \Exception
 
 			case 250:
 				$message = $this -> getLocalMessage ('errors.modules.cache.folder', $this -> getMessage ());
+				break;
+
+			case 300:
+				$message = $this -> getLocalMessage ('errors.model.missingField', $this -> getMessage ());
+				break;
+
+			case 301:
+				$message = $this -> getLocalMessage ('errors.model.cannotUnset', $this -> getMessage ());
+				break;
+
+			case 302:
+				$message = $this -> getLocalMessage ('errors.model.missingClass', $this -> getMessage ());
+				break;
+
+			case 303:
+				list ($scope, $model) = explode ('|', $this -> getMessage ());
+				$message = $this -> getLocalMessage ('errors.model.missingScope', $this -> getMessage ());
 				break;
 			
 			default:
@@ -147,9 +164,9 @@ class Exception extends \Exception
 
 	protected static function getLocalMessage ($message)
 	{
-		if (Application::module ('language')
-		and Application::module ('language') -> test ($message))
-		return Application::module ('language') -> translate (func_get_args());
+		if (Framework::module ('language')
+		and Framework::module ('language') -> test ($message))
+		return Framework::module ('language') -> translate (func_get_args());
 
 		list ($code, $param, $other) = array_merge (func_get_args(), ['', '']);
 		switch ($code)
@@ -169,6 +186,10 @@ class Exception extends \Exception
 			case 'errors.modules.db.settings': return 'Settings do not contain enough data!';
 			case 'errors.modules.db.server': return 'Could not connect to "' . $param . '" MySQL server!';
 			case 'errors.modules.db.database': return 'Could not connect to "' . $param . '" database!';
+			case 'errors.model.missingField': return 'Field "' . $param . '" does not exists!';
+			case 'errors.model.cannotUnset': return 'Field "' . $param . '" can not be deleted!';
+			case 'errors.model.missingClass': return 'Model "' . $param . '" does not exists!';
+			case 'errors.model.missingScope': return 'Scope "' . $param . '" was not defined in model "' . $other . '"!';
 		}
 	}
 

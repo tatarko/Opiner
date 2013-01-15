@@ -69,7 +69,7 @@ class Database extends \Opiner\Module
 			$data = $this -> select ($this -> _settings ['settings'] [1], $this -> _settings ['settings'] [2]) -> table ($this -> _settings ['settings'] [0]) -> fetch ();
 			if ($data)
 			foreach ($data as $row)
-			\Opiner\Application::config ($row [$this -> _settings ['settings'] [1]], $row [$this -> _settings ['settings'] [2]], false);
+			\Opiner\Framework::config ($row [$this -> _settings ['settings'] [1]], $row [$this -> _settings ['settings'] [2]], false);
 		}
 
 		/*if ($this -> _settings ['relations'] === true)
@@ -140,15 +140,15 @@ class Database extends \Opiner\Module
 
 	protected function query ($string)
 	{
-		\Opiner\Application::$log ['database'] [] = $string;
+		\Opiner\Framework::$log ['database'] [] = $string;
 	        if ($this -> disable !== null)
 		{
-			self::error ($this -> disable . ' | Full Syntax: ' . $string, \Opiner\toLog);
+			self::error ($this -> disable . ' | Full Syntax: ' . $string, \Opiner\Framework::errorToLog);
 			return false;
 		}
 		if (false === $result = mysql_query ($string, $this -> connection))
 		{
-			self::error (mysql_error(), \Opiner\toLog);
+			self::error (mysql_error(), \Opiner\Framework::errorToLog);
 			$this -> segments = array ();
 			return false;
 		}
@@ -422,6 +422,31 @@ class Database extends \Opiner\Module
 
 
 	/**
+	 * Mazanie zaznamov
+	 *
+	 * Vytvori querinu na databazu, ktora bude zapricinovat
+	 * mazanie jednotlivych riadkov. Tato metoda este nevykona
+	 * samotne mazanie, len vygeneruje prvy segment SQL prikazu.
+	 * Odporuca sa doplnit podmienky, ktore zaznamy sa maju mazat
+	 * pomocou metody where(), pripadne urcit pocet vymazanych
+	 * riadkov pomocou limit(). Prikaz sa vykona zavolanim
+	 * metody send().
+	 *
+	 * @param string Nazov tabulky, v ktorej mazat menit obsah
+	 * @return object
+	 * @since 0.6
+	 */
+
+	public function delete ($table)
+	{
+		if (empty ($table)) return false;
+		$this -> segments [] = 'DELETE FROM ' . $this -> getWrap ($this -> prefix . $table);
+		return $this;
+	}
+
+
+
+	/**
 	 * Ako zoradit vysledky
 	 *
 	 * Urci, podla ktorych buniek zoradit vysledky
@@ -495,6 +520,57 @@ class Database extends \Opiner\Module
 		while ($data = $this -> result ($this -> result))
 		$result[] = $data;
 		return $result;
+	}
+
+
+
+	/**
+	 * Výber zaznamov ako JSON
+	 *
+	 * Tato metoda vrati jednotlive zaznamy podla
+	 * vyskladaneho prikazu. Vysledok je vrateny ako
+	 * dvojrozmerne pole ukryte v JSONe, kde na prvej
+	 * urovni su jednotlive riadky a na druhej urovni
+	 * jednotlive bunky toho riadka.
+	 *
+	 * @return string JSON struktura
+	 * @since 0.6
+	 */
+
+	public function fetchAsJson ()
+	{
+		$this -> send (false);
+		if (false === $this -> result) return false;
+		$result = array ();
+		while ($data = $this -> result ($this -> result))
+		$result[] = $data;
+		return json_encode ($result);
+	}
+
+
+
+	/**
+	 * Výber zaznamov ako CSV
+	 *
+	 * Tato metoda vrati jednotlive zaznamy podla
+	 * vyskladaneho prikazu. Vysledok je vrateny ako
+	 * dvojrozmerne pole ukryte v CSV, kde na prvej
+	 * urovni su jednotlive riadky a na druhej urovni
+	 * jednotlive bunky toho riadka.
+	 *
+	 * @param string Retazec oddelujuci bunky v ramci riadku
+	 * @return string CSV struktura
+	 * @since 0.6
+	 */
+
+	public function fetchAsCsv ($delimiter = ';')
+	{
+		$this -> send (false);
+		if (false === $this -> result) return false;
+		$result = array ();
+		while ($data = $this -> result ($this -> result))
+		$result[] = implode ($delimiter, $data);
+		return implode (PHP_EOL, $result);
 	}
 
 

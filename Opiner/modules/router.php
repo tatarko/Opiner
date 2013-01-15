@@ -197,9 +197,9 @@ class Router extends \Opiner\Module
 	{
 		// Načítanie súborovej štruktúry pre View
 		self::getFile (\Opiner\root . 'class/controller.php');
-		if (!self::isFile (\Opiner\Application::location ('controller', $this -> controller)))
+		if (!self::isFile (\Opiner\Framework::location ('controller', $this -> controller)))
 		throw new \Opiner\Exception ($this -> controller, 210);
-		self::getFile (\Opiner\Application::location ('controller', $this -> controller));
+		self::getFile (\Opiner\Framework::location ('controller', $this -> controller));
 
 		// Nacitanie controllera		
 		$controllerName = '\\Opiner\\Controller\\' . ucfirst ($this -> controller);
@@ -214,7 +214,7 @@ class Router extends \Opiner\Module
 		$this -> controllerObject -> $actionName ();
 
 		// Ukoncenie celeho procesu
-		\Opiner\Application::module ('template') -> setView ($this -> view);
+		\Opiner\Framework::module ('template') -> setView ($this -> view);
 		return $this;
 	}
 

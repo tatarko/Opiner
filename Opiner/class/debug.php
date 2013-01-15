@@ -37,7 +37,7 @@ class Debug
 	public function __construct ()
 	{
 		$this -> start = microtime (true);
-		$this -> localhost = substr (remote, 0, 17) == 'http://localhost/' ? true : false;
+		$this -> localhost = substr (Framework::getRemoteLocation (), 0, 17) == 'http://localhost/' ? true : false;
 		return $this;
 	}
 
@@ -68,7 +68,7 @@ class Debug
 return '
 
 <div style="display:block;position:fixed;bottom:0;right:0;width:300px;height:21px;background:#333 -webkit-gradient(linear, left top, left bottom, from(#383838), to(#222));color:#eee;text-shadow:1px 1px 0 #000;padding:0 10px;font:normal 11px Calibri;line-height:21px;text-align:center;-webkit-border-radius:4px 0 0 0;">
-' . round ((microtime (true) - $this -> start) * 1000) . 'ms / ' . count(get_included_files()) . ' files / ' . count($classes) . ' classes / ' . count($funcs['user']) . ' functions / ' . count($vars) . ' constants / ' . count(Application::$log) . ' queries
+' . round ((microtime (true) - $this -> start) * 1000) . 'ms / ' . count(get_included_files()) . ' files / ' . count($classes) . ' classes / ' . count($funcs['user']) . ' functions / ' . count($vars) . ' constants / ' . count(Framework::$log) . ' queries
 </div>
 
 <!--
@@ -86,7 +86,7 @@ Constants:
 ' . implode ("\n", $vars) . '
 
 Log:
-' . var_export (Application::$log, true) . '
+' . var_export (Framework::$log, true) . '
 
 -->';
 	}

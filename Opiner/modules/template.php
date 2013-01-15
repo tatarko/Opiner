@@ -4,7 +4,7 @@
 namespace Opiner\Module;
 
 // Nacitavanie potrebnych funkcii
-\Opiner\Application::getFile (\Opiner\root . 'library/parser.php');
+\Opiner\Framework::getFile (\Opiner\root . 'library/parser.php');
 
 
 
@@ -76,23 +76,23 @@ class Template extends \Opiner\Module
 	{
 		// Nastavenie default hodnot
 		$this -> folderName = $name;
-		$this -> root = \Opiner\web . 'template/' . $this -> folderName . '/';
-		$this -> remote = \Opiner\remote . 'template/' . $this -> folderName . '/assets/';
+		$this -> root = \Opiner\Framework::getWebLocation () . 'template/' . $this -> folderName . '/';
+		$this -> remote = \Opiner\Framework::getRemoteLocation () . 'template/' . $this -> folderName . '/assets/';
 
 		// Nacitanie konfiguracie motivu
 		if (!self::isFile ($this -> root . 'config.php'))
 		throw new \Opiner\Exception ($name . '|' . $this -> root . 'config.php', 200);
-		require_once ($this -> root . 'config.php');
+		require ($this -> root . 'config.php');
 
 		// Nasadenie zakladnych hodnot do templatu
 		$this
 			-> setView ($this -> view)
 			-> meta ('generator', \Opiner\name . ' ' . \Opiner\version)
 			-> meta ('robots', 'index, follow')
-			-> value ('basehref', \Opiner\remote)
+			-> value ('basehref', \Opiner\Framework::getRemoteLocation ())
 			-> value ('template/remote', $this -> remote)
 			-> value ('template/name', $this -> name)
-			-> value ('site/remote', \Opiner\remote)
+			-> value ('site/remote', \Opiner\Framework::getRemoteLocation ())
 			-> value ('site/powered', 'Powered by <a href="' . \Opiner\url . '">' . \Opiner\name . '</a>');
 		return $this;
 	}
@@ -132,7 +132,7 @@ class Template extends \Opiner\Module
 	{
 		$lines = array (
 			'<base href="' . $this -> value ('basehref') . '" />',
-			'<meta http-equiv="content-type" content="' . \Opiner\Application::$headerType . ';charset=' . \Opiner\Application::$charSet . '" />'
+			'<meta http-equiv="content-type" content="' . \Opiner\Framework::$headerType . ';charset=' . \Opiner\Framework::$charSet . '" />'
 		);
 		foreach ($this -> meta as $index => $value)
 		$lines[] = '<meta name="' . $index . '" content="' . htmlspecialchars ($value, ENT_COMPAT) . '" />';
@@ -145,7 +145,7 @@ class Template extends \Opiner\Module
 			$lines [] = $link . ' />';
 		}
 		foreach (array_unique (array_filter ($this -> scripts)) as $value)
-		$lines[] = '<script src="' . $value . '" type="text/javascript" charset="' . \Opiner\Application::$charSet . '"></script>';
+		$lines[] = '<script src="' . $value . '" type="text/javascript" charset="' . \Opiner\Framework::$charSet . '"></script>';
 		$lines[] = '<title>' . implode (' ' . $this -> separator . ' ', $this -> title) . '</title>';
 		$lines = array_merge ($lines, $this -> tohead);
 		$lines = array_unique (array_filter ($lines));

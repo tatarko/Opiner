@@ -118,7 +118,7 @@ abstract class Model
 	public final function __get ($field)
 	{
 		if (array_search ($field, static::$fields) === false)
-		throw new Exception ($field, 301);
+		throw new Exception ($field, 300);
 		return $this -> storage [$field];
 	}
 
@@ -154,7 +154,7 @@ abstract class Model
 
 	public final function __unset ($field)
 	{
-		throw new Exception ($field, 302);
+		throw new Exception ($field, 301);
 	}
 
 
@@ -193,7 +193,7 @@ abstract class Model
 
 	protected static final function prepareMeta ()
 	{
-		foreach (Application::module ('database') -> getFieldList (static::tableName ()) as $field)
+		foreach (Framework::module ('database') -> getFieldList (static::tableName ()) as $field)
 		{
 			static::$fields [] = $field ['Field'];
 			static::$fieldData [$field ['Field']] = [
@@ -265,23 +265,50 @@ abstract class Model
 	{
 		if ($this -> isNew)
 		{
-			if (!Application::module('database') -> insert (static::tableName (), $this -> storage) -> send ())
+			if (!Framework::module('database') -> insert (static::tableName (), $this -> storage) -> send ())
 			return false;
 			
 			$this -> isNew = false;
 			$this -> executeUpdate = false;
 			if ($this -> primaryKey)
-			$this -> activePrimaryKey = Application::module('database') -> getAutoIncrementValue ();
+			$this -> activePrimaryKey = Framework::module('database') -> getAutoIncrementValue ();
 			return true;
 		}
 		else
 		{
-			if (!Application::module('database') -> update (static::tableName (), $this -> storage) -> where (static::$primaryKey, $this -> activePrimaryKey) -> send ())
+			if (!Framework::module('database') -> update (static::tableName (), $this -> storage) -> where (static::$primaryKey, $this -> activePrimaryKey) -> send ())
 			return false;
 
 			$this -> executeUpdate = false;
 			return true;
 		}
+	}
+
+
+
+	/**
+	 * Zmazanie riadku z databazy
+	 *
+	 * Volanie tejto metody zapricini nenavratne zmazanie
+	 * daneho riadku z databazy. Tento stav sa uz nebude
+	 * dat vratit spat.
+	 *
+	 * @return boolean Vykonala sa query na DB spravne?
+	 * @since 0.6
+	 */
+
+	public final function delete ()
+	{
+		$query = Framework::module('database') -> delete (static::tableName ());
+		if (static::$primaryKey)
+			$query -> where (static::$primaryKey, $this -> activePrimaryKey);
+			else
+		if ($query -> send ())
+		{
+			unset ($this);
+			return true;
+		}
+		else return false;
 	}
 
 

@@ -15,10 +15,8 @@ namespace Opiner;
  * @abstract
  */
 
-abstract class Controller
+abstract class Controller extends Object
 {
-
-	use Behavior;
 	
 	protected
 		$db,
@@ -162,6 +160,30 @@ abstract class Controller
 		if (!class_exists ($name))
 		throw new Exception ($model, 302);
 		return $name::model ();
+	}
+
+
+
+	/**
+	 * Vytvorenie noveho formulara
+	 *
+	 * Tato napomocna trieda vyvola nacitanie toho
+	 * spravneho suboru potrebneho na tvorbu
+	 * formularov a zaroven vytvori novy
+	 * objekt triedy Form.
+	 *
+	 * @param string Kam ma formular smerovat
+	 * @param string akou metodou sa maju odosielat data
+	 * @return object/Form
+	 * @since 0.6
+	 */
+
+	protected function createForm ($action = null, $method = 'post')
+	{
+		if (!class_exists ('\\Opiner\\Form'))
+		self::getFile (root . 'class/form.php');
+		
+		return new Form ($action, $method);
 	}
 }
 ?>

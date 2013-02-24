@@ -19,8 +19,7 @@ namespace Opiner;
  * @since 0.5
  */
 
-abstract class Model
-{
+abstract class ActiveRecord extends Object {
 
 	protected
 		$storage = [],

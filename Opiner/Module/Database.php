@@ -32,7 +32,10 @@ class Database extends \Opiner\Module
 		$connection,
 		$segments = array (),
 		$disable = null,
-		$prefix = '';
+		$prefix = '',
+		$tablelog = array(),
+		$result;
+	
 
 
 
@@ -57,25 +60,25 @@ class Database extends \Opiner\Module
 
 	public function startup ()
 	{
-		if (!isset ($this -> _settings ['server'], $this -> _settings ['username'], $this -> _settings ['password'], $this -> _settings ['database']))
+		if (!isset ($this -> settings ['server'], $this -> settings ['username'], $this -> settings ['password'], $this -> settings ['database']))
 		throw new \Opiner\Exception (null, 220);
-		$this -> connect ($this -> _settings ['server'], $this -> _settings ['username'], $this -> _settings ['password'], $this -> _settings ['database']);
+		$this -> connect ($this -> settings ['server'], $this -> settings ['username'], $this -> settings ['password'], $this -> settings ['database']);
 
-		if ($this -> _settings ['prefix'])
-		$this -> setPrefix ($this -> _settings ['prefix']);
+		if ($this -> settings ['prefix'])
+		$this -> setPrefix ($this -> settings ['prefix']);
 
-		if (is_array ($this -> _settings ['settings']) and count ($this -> _settings ['settings']) == 3)
+		if (is_array ($this -> settings ['settings']) and count ($this -> settings ['settings']) == 3)
 		{
-			$data = $this -> select ($this -> _settings ['settings'] [1], $this -> _settings ['settings'] [2]) -> table ($this -> _settings ['settings'] [0]) -> fetch ();
+			$data = $this -> select ($this -> settings ['settings'] [1], $this -> settings ['settings'] [2]) -> table ($this -> settings ['settings'] [0]) -> fetch ();
 			if ($data)
 			foreach ($data as $row)
-			\Opiner\Framework::config ($row [$this -> _settings ['settings'] [1]], $row [$this -> _settings ['settings'] [2]], false);
+			\Opiner\Framework::config ($row [$this -> settings ['settings'] [1]], $row [$this -> settings ['settings'] [2]], false);
 		}
 
-		/*if ($this -> _settings ['relations'] === true)
+		/*if ($this -> settings ['relations'] === true)
 		$this -> mapRelations ();*/
 
-		unset ($this -> _settings);
+		unset ($this -> settings);
 		return $this;
 	}
 

@@ -21,8 +21,7 @@ namespace Opiner;
  * @since 0.5
  */
 
-class ModelHandler
-{
+class Model extends Object {
 
 	protected
 		$tableName,

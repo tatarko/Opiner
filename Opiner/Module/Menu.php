@@ -45,8 +45,8 @@ class Menu extends \Opiner\Module
 
 	public function startup ()
 	{
-		$this -> prepare ($this -> _settings);
-		unset ($this -> _settings);
+		$this -> prepare ($this -> settings);
+		unset ($this -> settings);
 		return $this;
 	}
 

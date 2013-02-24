@@ -35,14 +35,13 @@ class Cache extends \Opiner\Module
 	 * Tato metoda sposobi samotne spustenie cache metody
 	 * a taktiez aj odstrani uz presluhujuce premenne, ktorym
 	 * vyprsala expiracia.
-	 *
-	 * @return object
+	 * @return Opiner\Module\Cache
 	 */
 
-	public function startup ()
-	{
-		$this -> run () -> chechOldValues ();
-		unset ($this -> _settings);
+	public function startup() {
+		
+		$this->run()->chechOldValues();
+		unset($this->settings);
 		return $this;
 	}
 

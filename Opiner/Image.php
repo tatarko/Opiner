@@ -17,7 +17,7 @@ namespace Opiner;
  * @since 0.4
  */
 
-class Image
+class Image extends Object
 {
 
 	protected

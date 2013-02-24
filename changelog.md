@@ -6,9 +6,10 @@
 * Hlavna trieda Application globalne premenova na Framework
 * Pri module Database aj triede Model pribudla nova metoda delete()
 * Pri vybere dat z databazy (aj pri modeloch) je mozne vysledky vyexportovat do JSON a CSV formatu.
-* Moznost opakovaneho kompilovania frameworku v ramci jedneho nehu skriptu.
+* Moznost opakovaneho kompilovania frameworku v ramci jedneho behu skriptu.
 * Moznost zmenit cestu k private suborom.
 * Kompilovanie frameworku uz nevyzaduje ziadne parametre.
+* Podpora pre Composer (Dependency Manager).
 
 ### Opiner 0.5
 * Weekly Build #5

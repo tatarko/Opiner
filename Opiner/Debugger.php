@@ -14,7 +14,7 @@ namespace Opiner;
  * @since 0.4
  */
 
-class Debug
+class Debugger extends Object
 {
 
 	protected

@@ -18,11 +18,13 @@ namespace Opiner;
  * @since 0.3
  */
 
-abstract class Module {
+abstract class Module extends Object {
 
-	use Behavior;
-
-	protected $_settings = [];
+	/**
+	 *
+	 * @var type 
+	 */
+	protected $settings = array();
 
 
 
@@ -41,7 +43,7 @@ abstract class Module {
 	public function __construct ($settings = null)
 	{
 		if ($settings === null) return $this;
-		$this -> _settings = $settings;
+		$this -> settings = $settings;
 		return $this;
 	}
 

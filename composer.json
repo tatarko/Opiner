@@ -1,5 +1,5 @@
 {
-	"name":			"tatarko/Opiner",
+	"name":			"opiner/framework",
 	"description":	"Lightweight php framework for rapid web creating",
 	"version":		"0.6",
 	"keywords":		["opiner", "php", "framework", "lightweight", "open source"],

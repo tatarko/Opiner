@@ -47,9 +47,19 @@ const LOCATION_CONFIG = '[:scripts:]config/[:param1:].php';
 const LOCATION_LANGUAGE = '[:scripts:]language/[:param1:].php';
 
 /**
+ * Adresa k modulom
+ */
+const LOCATION_MODULE = '[:scripts:]Module/[:param1:].php';
+
+/**
  * Zakladny typ generovaneho dokumentu
  */
 const LOCATION_PRIVATE_DIRECOTY = '[:webroot:]private/';
+
+/**
+ * Adresa k modelom
+ */
+const LOCATION_MODEL = '[:scripts:]Model/';
 
 /**
  * V pripade chybu ju iba logovat

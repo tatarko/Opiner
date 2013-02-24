@@ -21,17 +21,30 @@ namespace Opiner;
 
 abstract class ActiveRecord extends Object {
 
-	protected
-		$storage = [],
-		$activePrimaryKey = false,
-		$isNew = false,
-		$executeUpdate = false,
-		$originalData = [];
-
-	protected static
-		$primaryKey,
-		$fields = [],
-		$fieldData = [];
+	/**
+	 * @var array Pole s hodnotami jednotlivych fieldov
+	 */
+	protected $storage = array();
+	
+	/**
+	 * @var array Hodnoty primarnych klucov pre dany row
+	 */
+	protected $primaryKeys = array();
+	
+	/**
+	 * @var bool Je tento zaznam novy?
+	 */
+	protected $isNew = false;
+	
+	/**
+	 * @var bool Hodnoty primarnych klucov pre dany row
+	 */
+	protected $executeUpdate = false;
+	
+	/**
+	 * @var Opiner\Model Model pre dany tok dat
+	 */
+	protected $model;
 
 
 
@@ -46,27 +59,20 @@ abstract class ActiveRecord extends Object {
 	 * existujuci zaznam v tabulke.
 	 *
 	 * @param array Data aktualneho riadka v tabulke
-	 * @return object
+	 * @return Opiner\ActiveRecord
 	 */
 
-	public final function __construct ($data = null)
-	{
-		$this -> prepareStorage ();
+	public final function __construct(Model $model = null) {
 		
-		if (is_array ($data) and count ($data) == count (static::$fields))
-		{
-			foreach ($data as $index => $value)
-			$this -> $index = $value;
-			$this -> executeUpdate = false;
-			$this -> originalData = $this -> storage;
-
-			if (static::$primaryKey)
-			{
-				$fieldName = static::$primaryKey;
-				$this -> activePrimaryKey = $this -> $fieldName;
-			}
+		if($model !== null && $model instanceof Model) {
+			$this->model = $model;
+			$this->isNew = false;
 		}
-		else $this -> isNew = true;
+		else $this->model = new Model($this);
+		
+		$this->storage		= $this->model->getValues();
+		$this->primaryKeys	= $this->model->getPrimaryKeys();
+
 		return $this;
 	}
 
@@ -89,15 +95,15 @@ abstract class ActiveRecord extends Object {
 	 * @return mixed Aktualna hodnota premennej
 	 */
 
-	public  function __set ($field, $value)
+	public  function __set($field, $value)
 	{
 		// Je takyto field v danej tabulke?
-		if (array_search ($field, static::$fields) === false)
-		throw new Exception ($field, 300);
+		if(!key_exists($field, $this->storage))
+		throw new Exception($field, 300);
 
 		// Ako bude vyzerat nova hodnota, bude nutny update DB?		
-		if ($value !== $this -> storage [$field]) $this -> executeUpdate = true;
-		$this -> storage [$field] = $value;
+		if($value !== $this->storage[$field]) $this->executeUpdate = true;
+		$this->storage[$field] = $value;
 		return $value;
 	}
 
@@ -114,11 +120,11 @@ abstract class ActiveRecord extends Object {
 	 * @return mixed Aktualna hodnota premennej
 	 */
 
-	public final function __get ($field)
+	public final function __get($field)
 	{
-		if (array_search ($field, static::$fields) === false)
-		throw new Exception ($field, 300);
-		return $this -> storage [$field];
+		if(!key_exists($field, $this->storage))
+		throw new Exception($field, 300);
+		return $this->storage[$field];
 	}
 
 
@@ -133,9 +139,9 @@ abstract class ActiveRecord extends Object {
 	 * @return boolean
 	 */
 
-	public final function __isset ($field)
+	public final function __isset($field)
 	{
-		return array_search ($field, static::$fields) === false ? false : true;
+		return array_search($field, static::$fields) === false ? false : true;
 	}
 
 
@@ -151,9 +157,9 @@ abstract class ActiveRecord extends Object {
 	 * @param string Kam ide pokus
 	 */
 
-	public final function __unset ($field)
+	public final function __unset($field)
 	{
-		throw new Exception ($field, 301);
+		throw new Exception($field, 301);
 	}
 
 
@@ -168,82 +174,13 @@ abstract class ActiveRecord extends Object {
 	 * @return object
 	 */
 
-	protected final function prepareStorage ()
+	protected final function prepareStorage()
 	{
-		if (empty (static::$fields))
-		static::prepareMeta ();
+		if(empty(static::$fields))
+		static::prepareMeta();
 
-		foreach (static::$fields as $field)
-		$this -> storage [$field] = static::$fieldData [$field] ['default'];
-	}
-
-
-
-	/**
-	 * Zisti detaily o tabulke
-	 *
-	 * Callback metoda pre prepareStorage. Ak je potrebne, tak
-	 * tato metoda si vytiahne z databazy informacie o vsetkych
-	 * fieldoch danej tabulky a na zaklade ziskanych hodnot
-	 * vytvori vnutornu staticku stukturu modelu.
-	 *
-	 * @return object
-	 */
-
-	protected static final function prepareMeta ()
-	{
-		foreach (Framework::module ('database') -> getFieldList (static::tableName ()) as $field)
-		{
-			static::$fields [] = $field ['Field'];
-			static::$fieldData [$field ['Field']] = [
-				'label'		=> ucwords (str_replace (['.', '-', '_'], ' ', $field ['Field'])),
-				'default'	=> $field ['Default'],
-				'rules'		=> [],
-				'type'		=> $field ['Type'],
-				'format'	=> static::getSimpleFieldTypeName ($field ['Type']),
-			];
-			if ($field ['Key'] == 'PRI') static::$primaryKey = $field ['Field'];
-			if ($field ['Null'] == 'NO' and strpos ($field ['Extra'], 'auto_increment') === false) static::$fieldData [$field ['Field']] ['rules'] [] = 'required';
-			if (strpos ($field ['Type'], 'unsigned') !== false) static::$fieldData [$field ['Field']] ['rules'] [] = 'unsigned';
-		}
-	}
-
-
-
-	/**
-	 * Vrati typovy nazov pre field
-	 *
-	 * Vstupom do tejto funkcie je typ niektoreho zo stlpcov tabulky
-	 * tak, ako je deklarovany v samotnej mysql databaze. Vystupom
-	 * funkcie je potom uz len jednoduche urcenie typu premennej
-	 * bez ohladu na jej parametre (string, int, ...)
-	 *
-	 * @param string Typ podla MySQL
-	 * @return string
-	 */
-
-	protected static final function getSimpleFieldTypeName ($type)
-	{
-		$type = strpos ($type, '(') !== false ? substr ($type, 0, strpos ($type, '(')) : $type;
-		switch ($type)
-		{
-			case 'tinyint':
-			case 'smallint':
-			case 'mediumint':
-			case 'int':
-			case 'bigint': return 'integer';
-			case 'decimal':
-			case 'float':
-			case 'double': return 'float';
-			case 'timestamp':
-			case 'datetime':
-			case 'time':
-			case 'year':
-			case 'date': return 'date';
-			case 'enum':
-			case 'set': return 'oneof';
-			default: return 'string';
-		}
+		foreach(static::$fields as $field)
+		$this->storage[$field] = static::$fieldData[$field]['default'];
 	}
 
 
@@ -260,25 +197,40 @@ abstract class ActiveRecord extends Object {
 	 * @return boolean Vykonala sa query na DB spravne?
 	 */
 
-	public final function save ()
-	{
-		if ($this -> isNew)
-		{
-			if (!Framework::module('database') -> insert (static::tableName (), $this -> storage) -> send ())
-			return false;
+	public final function save() {
+		
+		// Ak ide o novy zaznam
+		if($this->isNew) {
 			
-			$this -> isNew = false;
-			$this -> executeUpdate = false;
-			if ($this -> primaryKey)
-			$this -> activePrimaryKey = Framework::module('database') -> getAutoIncrementValue ();
+			$query = Framework::module('database')
+					->insert(static::getTableName(), $this->storage)
+					->send();
+			
+			if(!$query)
+				return false;
+			
+			$this->isNew			= false;
+			$this->executeUpdate	= false;
+			
+			if($field = $this->model->getAutoIncrementField())
+				$this->storage[$field] = Framework::module('database')->getAutoIncrementValue();
+
 			return true;
 		}
-		else
-		{
-			if (!Framework::module('database') -> update (static::tableName (), $this -> storage) -> where (static::$primaryKey, $this -> activePrimaryKey) -> send ())
-			return false;
+		else {
+			
+			$query = Framework::module('database')->update(static::getTableName(), $this->storage);
+			
+			if(!empty($this->primaryKeys)) {
+				foreach($this->primaryKeys as $pk)
+					$where[$pk] = $this->storage[$pk];
+				$query->where($where);
+			}
+			
+			if(!$query->send())
+				return false;
 
-			$this -> executeUpdate = false;
+			$this->executeUpdate = false;
 			return true;
 		}
 	}
@@ -296,15 +248,15 @@ abstract class ActiveRecord extends Object {
 	 * @since 0.6
 	 */
 
-	public final function delete ()
+	public final function delete()
 	{
-		$query = Framework::module('database') -> delete (static::tableName ());
-		if (static::$primaryKey)
-			$query -> where (static::$primaryKey, $this -> activePrimaryKey);
+		$query = Framework::module('database')->delete(static::getTableName());
+		if(static::$primaryKey)
+			$query->where(static::$primaryKey, $this->activePrimaryKey);
 			else
-		if ($query -> send ())
+		if($query->send())
 		{
-			unset ($this);
+			unset($this);
 			return true;
 		}
 		else return false;
@@ -321,9 +273,11 @@ abstract class ActiveRecord extends Object {
 	 * @return string
 	 */
 
-	public final static function tableName ()
-	{
-		return substr (get_called_class (), strrpos (get_called_class (), '\\') + 1);
+	public final static function getTableName() {
+		
+		if(strpos(get_called_class(), '\\') !== false)
+			return substr(get_called_class(), strrpos(get_called_class(), '\\') + 1);
+			else return get_called_class();
 	}
 
 
@@ -335,18 +289,13 @@ abstract class ActiveRecord extends Object {
 	 * ktora zabezpecuje vyber riadkov tabulky na zaklade predanych
 	 * pravidiel. Ak nie je predany argument model, tak 
 	 *
-	 * @return object ModelHandler
+	 * @return Opiner/Model
 	 */
 
-	public final static function model ()
-	{
-		if (empty (static::$fieldData))
-		{
-			$classname = '\\Opiner\\Model\\' . static::tableName ();
-			$obj = new $classname;
-			unset ($classname, $obj);
-		}
-		return new ModelHandler (static::tableName (), static::$fieldData, static::$primaryKey);
+	public final static function model() {
+		
+		$class = get_called_class();
+		return new Model(new $class);
 	}
 }
 

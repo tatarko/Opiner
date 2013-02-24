@@ -3,6 +3,7 @@
 return [
 
 	// Prihlasovacie údaje k databáze
+/*
 	'database' => [
 		'server'	=> 'localhost',
 		'username'	=> 'root',
@@ -12,6 +13,7 @@ return [
 		'settings'	=> ['settings', 'key', 'value'],
 		'relations'	=> true,
 	],
+*/
 
 	// Vsetko ostatne
 	'template' => [
@@ -23,6 +25,7 @@ return [
 		],
 		'links'		=> ['remote/css/default.css'],
 	],
+/*
 	
 	'menu'	=> [
 		'navigation'	=> [
@@ -37,10 +40,10 @@ return [
 		],
 		'breadcrumbs' => true,
 	],
+*/
 
 	'language'	=> 'slovak',
 	'router'	=> '{$controller:string:site$/{$action:string:default$/}}{$primary:int:0$/{$secondary:int:0$/}}',
-	'cache'		=> true,
 
 /*
 	'modules'	=> [

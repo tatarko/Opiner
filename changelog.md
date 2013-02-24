@@ -4,6 +4,7 @@
 ### Opiner 0.6
 * (rozpracovane, este budu pribudat zmeny pred vydanim)
 * Hlavna trieda Application globalne premenova na Framework
+* Materska trieda Opiner\Object pre vsetky triedy frameworku
 * Pri module Database aj triede Model pribudla nova metoda delete()
 * Pri vybere dat z databazy (aj pri modeloch) je mozne vysledky vyexportovat do JSON a CSV formatu.
 * Moznost opakovaneho kompilovania frameworku v ramci jedneho behu skriptu.

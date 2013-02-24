@@ -16,4 +16,6 @@
 
 * Vytvorenie rozhrania na prácu s formulármi.
 * Zriadit rozhranie na odosielanie emailov.
+* Premysliet a pretvorit sablonovaci system.
+* Premysliet a pretvorit databazovy modul.
 * [Navrhni dalsie](mailto:tomas@tatarko.sk)

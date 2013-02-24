@@ -58,32 +58,27 @@ class Debugger extends Object
 
 	public function __toString ()
 	{
-		foreach (get_defined_constants () as $index => $value)
-		if (substr ($index, 0, 6) == 'Opiner') $vars[] = $index . ' = ' . var_export($value, true) . ';';
-		$funcs = get_defined_functions ();
-		foreach (get_declared_classes() as $trieda)
-		if (substr ($trieda, 0, 6) == 'Opiner') $classes[] = $trieda;
+		$funcs = get_defined_functions();
+		foreach(get_declared_classes() as $trieda)
+		if(substr($trieda, 0, 6) == __NAMESPACE__) $classes[] = $trieda;
 			
 		
 return '
 
-<div style="display:block;position:fixed;bottom:0;right:0;width:300px;height:21px;background:#333 -webkit-gradient(linear, left top, left bottom, from(#383838), to(#222));color:#eee;text-shadow:1px 1px 0 #000;padding:0 10px;font:normal 11px Calibri;line-height:21px;text-align:center;-webkit-border-radius:4px 0 0 0;">
-' . round ((microtime (true) - $this -> start) * 1000) . 'ms / ' . count(get_included_files()) . ' files / ' . count($classes) . ' classes / ' . count($funcs['user']) . ' functions / ' . count($vars) . ' constants / ' . count(Framework::$log) . ' queries
+<div style="display:block;position:fixed;bottom:0;right:0;width:225px;height:21px;background:#333 -webkit-gradient(linear, left top, left bottom, from(#383838), to(#222));color:#eee;text-shadow:1px 1px 0 #000;padding:0 10px;font:normal 11px Calibri;line-height:21px;text-align:center;-webkit-border-radius:4px 0 0 0;">
+' . round ((microtime (true) - $this -> start) * 1000) . 'ms / ' . count(get_included_files()) . ' files / ' . count($classes) . ' classes / ' . count($funcs['user']) . ' functions / ' . count(Framework::$log, COUNT_RECURSIVE) . ' logs
 </div>
 
 <!--
 
 Files:
-' . implode ("\n", get_included_files()) . '
+' . implode (PHP_EOL, get_included_files()) . '
 
 Classes:
-' . implode ("\n", $classes) . '
+' . implode (PHP_EOL, $classes) . '
 
 Functions:
-' . implode ("\n", $funcs['user']) . '
-
-Constants:
-' . implode ("\n", $vars) . '
+' . implode (PHP_EOL, $funcs['user']) . '
 
 Log:
 ' . var_export (Framework::$log, true) . '

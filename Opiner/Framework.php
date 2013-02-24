@@ -205,9 +205,8 @@ class Framework extends Object {
 			$name	= '\\Opiner\\Module\\' . ucfirst($type);
 			$config = isset(self::$settings[$module]) ? self::$settings[$module] : null;
 
-			if(class_exists($name))
+			if($config && class_exists($name))
 				self::$modules[$module] = new $name($config);
-				else throw new Exception($type, 110);
 		}
 
 		// Postupne spustanie vsetkych ocakavanych metod
@@ -256,12 +255,12 @@ class Framework extends Object {
 	 * Callback vracajuci pozadovany modul na zaklade predaneho nazvu
 	 *
 	 * @param string Unikatny nazov pozadovaneho modulu
-	 * @return object
+	 * @return Opiner\Module
 	 */
 
-	public static function module ($localname)
-	{
-		return isset (self::$modules [$localname]) ? self::$modules [$localname] : null;
+	public static function module($localname) {
+		
+		return isset(self::$modules [$localname]) ? self::$modules [$localname] : null;
 	}
 
 

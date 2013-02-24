@@ -23,16 +23,55 @@ namespace Opiner;
 
 class Model extends Object {
 
-	protected
-		$tableName,
-		$className,
-		$fields = [],
-		$primaryKey,
-		$conditions = [],
-		$order,
-		$limit = 1000,
-		$offset = 0,
-		$scopes = [];
+	/**
+	 * @var string Nazov tabulky v databaze
+	 */
+	protected $tableName;
+
+	/**
+	 * @var string Nazov triedy samotneho Active Record-u
+	 */
+	protected $className;
+
+	/**
+	 * @var array Informacie o bunkach tabulky
+	 */
+	protected static $fields = array();
+
+	/**
+	 * @var array Primarne kluce tabulky
+	 */
+	protected static $primaryKeys = array();
+
+	/**
+	 * @var array Podmienky vyberu dat z tabulky
+	 */
+	protected $conditions = array();
+
+	/**
+	 * @var array Sposob zoradenia vysledkov
+	 */
+	protected $order = array();
+
+	/**
+	 * @var int Maximalny pocet vratenych vysledkov
+	 */
+	protected $limit = 1000;
+
+	/**
+	 * @var int Pocet preskocenych vysledkov
+	 */
+	protected $offset = 0;
+
+	/**
+	 * @var array Pomenovanie rozhrania/scenare
+	 */
+	protected $scopes = array();
+
+	/**
+	 * @var bool|array Docasne skladisko dat pre ActiveRecord
+	 */
+	private $metaData = false;
 
 
 
@@ -47,25 +86,36 @@ class Model extends Object {
 	 * co je zhrnutie viacerych podmienok pod jeden nazov.
 	 * Na zaver sa samotny novo vytvoreny objekt vrati.
 	 *
-	 * @param string Aky model spravujeme
-	 * @param array Informacie o jednotlivych bunkach tohto modelu
-	 * @param string Ktora bunka predstavuje primarny kluc?
-	 * @return object
+	 * @param Opiner\ActiveRecord Ukazkovy objekt
+	 * @return Opiner\Model
+	 * @throws Opiner\Exception Ak vstupny argument nie je instaciou ActiveRecord triedy
 	 */
 
-	public function __construct ($model, $data, $primaryKey = null)
-	{
-		$this -> tableName = $model;
-		$this -> className = '\\Opiner\\Model\\' . $model;
-		$this -> fields = $data;
-		$this -> primaryKey = $primaryKey;
+	public function __construct(ActiveRecord $activeRecord) {
 		
-		if (!class_exists ($this -> className))
-		throw new Exception ($this -> tableName, 302);
+		if(!$activeRecord instanceof ActiveRecord)
+			throw new Exception(get_class($activeRecord), 302);
 		
-		foreach (get_class_methods ($this -> className) as $method)
-		if (substr ($method, 0, 5) == 'scope' and $method !== 'scope')
-		$this -> scopes [strtolower (substr ($method, 5))] = $method;
+		$this->tableName	= $activeRecord->getTableName();
+		$this->className	= get_class($activeRecord);
+
+		if(!isset(self::$fields[$this->tableName])) {
+		
+			self::$fields[$this->tableName]			= array();
+			self::$primaryKeys[$this->tableName]		= array();
+			
+			foreach(Framework::module('database')->getFieldList($this->tableName) as $field) {
+				
+				self::$fields[$this->tableName][$field['Field']] = new TableField($field);
+				
+				if(self::$fields[$this->tableName][$field['Field']]->isPrimaryKey())
+					self::$primaryKeys[$this->tableName][] = $field['Field'];
+			}
+		}
+		
+		foreach(get_class_methods($this->className) as $method)
+		if(substr($method, 0, 5) == 'scope' and $method !== 'scope')
+		$this->scopes[strtolower(substr($method, 5))] = $method;
 		
 		return $this;
 	}
@@ -83,21 +133,18 @@ class Model extends Object {
 	 *
 	 * @param string Ktory scope bude volany
 	 * @param array Parametre volaneho scopu
-	 * @return object
+	 * @return Opiner\Model
 	 */
 
-	public function __call ($method, $params)
-	{
-		$method = strtolower ($method);
-		if (!isset ($this -> scopes [$method]))
-		throw new Exception ($method . '|' . $this -> tableName, 303);
+	public function __call($method, $params) {
 		
-		foreach ($params as $index => $value)
-		$params [$index] = var_export ($value, true);
-		eval ('$params = ' . $this -> className . '::' . $this -> scopes [$method] . '(' . implode (', ', $params) . ');');
+		$method = strtolower($method);
+		if(!isset($this->scopes[$method]))
+		throw new Exception($method . '|' . $this->tableName, 303);
 		
-		foreach ($params as $index => $value)
-		$this -> $index ($value);
+		foreach($params as $index => $value)
+		$params[$index] = var_export($value, true);
+		eval('$this->params = ' . $this->className . '::' . $this->scopes[$method] . '(' . implode(', ', $params) . ');');
 
 		return $this;
 	}
@@ -114,18 +161,18 @@ class Model extends Object {
 	 * padom k ukonceniu kompilovania frameworku.
 	 *
 	 * @param array Pole podmienok
-	 * @return object
+	 * @return Opiner\Model
 	 */
 
-	public function conditions ($argument)
-	{
-		if (!is_array ($argument)) return $this;
-		foreach ($argument as $index => $value)
-		{
-			$field = substr ($index, 0, strpos ($index, '#'));
-			if (!isset ($this -> fields [$index]))
-			throw new Exception ($index, 300);
-			$this -> conditions [] = [$index, $value];
+	public function conditions($argument) {
+		
+		if(!is_array($argument)) return $this;
+		foreach($argument as $index => $value) {
+			
+			$field = current(explode('#', $index));
+			if(!isset(self::$fields[$this->tableName][$field]))
+			throw new Exception($index, 300);
+			$this->conditions[$index] = $value;
 		}
 		return $this;
 	}
@@ -140,12 +187,12 @@ class Model extends Object {
 	 *
 	 * @param string Nazov bunky
 	 * @param mixed Ocakavana hodnota tej bunky
-	 * @return object
+	 * @return Opiner\Model
 	 */
 
-	public function condition ($fied, $value)
-	{
-		return $this -> conditions ([$field => $value]);
+	public function condition($field, $value) {
+		
+		return $this->conditions(array($field => $value));
 	}
 
 
@@ -157,12 +204,12 @@ class Model extends Object {
 	 * nastavenych, tak mu na to postaci jednoduche volanie
 	 * tejto metody bez argumentov
 	 *
-	 * @return object
+	 * @return Opiner\Model
 	 */
 
-	public function clearConditions ()
-	{
-		$this -> conditions = [];
+	public function clearConditions() {
+
+		$this->conditions = array();
 		return $this;
 	}
 
@@ -179,13 +226,12 @@ class Model extends Object {
 	 * tejto metody.
 	 *
 	 * @param array Ake podmienky maju byt nastavene?
-	 * @return object
+	 * @return Opiner\Model
 	 */
 
-	public function setConditions ($conditions)
-	{
-		$this	-> clearConditions ()
-			-> conditions ($conditions);
+	public function setConditions($conditions) {
+		
+		$this->clearConditions()->conditions($conditions);
 	}
 
 
@@ -202,13 +248,13 @@ class Model extends Object {
 	 *
 	 * @param int Aktualna strana
 	 * @param int Limit poloziek na jednu stranu
-	 * @return object
+	 * @return Opiner\Model
 	 */
 
-	public function setLimitByPage ($page, $limit)
-	{
-		$this -> limit = max (intval ($limit), 1);
-		$this -> offset = (max (intval ($page), 1) - 1) * $this -> limit;
+	public function setLimitByPage($page, $limit) {
+		
+		$this->limit	= max(intval($limit), 1);
+		$this->offset	= (max(intval($page), 1) - 1) * $this->limit;
 		return $this;
 	}
 
@@ -221,12 +267,12 @@ class Model extends Object {
 	 * zvoleny maximalny pocet riadkov
 	 *
 	 * @param int Ocakavany pocet poloziek
-	 * @return object
+	 * @return Opiner\Model
 	 */
 
-	public function limit ($limit)
-	{
-		$this -> limit = max (intval ($limit), 1);
+	public function limit($limit) {
+		
+		$this->limit = max(intval($limit), 1);
 		return $this;
 	}
 
@@ -241,12 +287,12 @@ class Model extends Object {
 	 * pri vypise poloziek vynecha.
 	 *
 	 * @param int Ocakavany offset poloziek
-	 * @return object
+	 * @return Opiner\Model
 	 */
 
-	public function offset ($offset)
-	{
-		$this -> offset = max (intval ($offset), 0);
+	public function offset($offset) {
+		
+		$this->offset = max(intval($offset), 0);
 		return $this;
 	}
 
@@ -263,37 +309,102 @@ class Model extends Object {
 	 * @return object
 	 */
 
-	public function order ($field, $by = 'asc')
-	{
-		if (!isset ($this -> fields [$field]))
-		throw new Exception ($index, 305, $this -> tableName);
-		$this -> order = $field . '#' . $by;
+	public function order($field, $by = 'asc') {
+		
+		if(!isset($this->fields[$field]))
+		throw new Exception($index, 305, $this->tableName);
+		$this->order = $field . '#' . $by;
 		return $this;
 	}
 
+	
+
+	/**
+	 * Vrati defaultne hodnoty pre riadok tabulky.
+	 * 
+	 * Defaultne hodnoty mozu byt zmene na aktualne
+	 * v pripade, ze sa vykonava vyber riadkov z modela.
+	 * @return array Pole hodnot
+	 * @internal Callback pre __construct v ActiveRecord
+	 */
+	
+	public function getValues() {
+		
+		foreach(self::$fields[$this->tableName] as $index => $field)
+			$return[$index] = $field->getDefaultValue();
+		
+		if($this->metaData) {
+			foreach($this->metaData as $index => $value)
+				$return[$index] = $value;
+		}
+
+		return $return;
+	}
+
+	
+
+	/**
+	 * Vrati zoznam primarnych klucov
+	 * @return array Pole primarnych klucov
+	 */
+	
+	public function getPrimaryKeys() {
+		
+		foreach(self::$fields[$this->tableName] as $index => $field)
+			if($field->isPrimaryKey())
+				$return[] = $index;
+
+		return isset($return) ? $return : array();
+	}
+
+	
+
+	/**
+	 * Vrati nazov bunky, ktora funguje ako auto_increment
+	 * @return string|bool
+	 */
+	
+	public function getAutoIncrementField() {
+		
+		foreach(self::$fields[$this->tableName] as $index => $field)
+			if($field->isAutoIncrement())
+				return $index;
+		
+		return false;
+	}
 
 
 	/**
-	 * Vrati jeden konkretny zaznam s unikatnym ID (primary key)
+	 * Vrati jeden konkretny zaznam s unikatnym ID(primary key)
 	 *
 	 * Tato metoda narozdiel od find() vrati vzdy iba jeden jediny
 	 * zaznam. Na vyhladanie tohto zaznamu sa pri tom pouziju
-	 * vsetky podmienky, scopy (a podobne), ktore boli uz skor nastavene.
+	 * vsetky podmienky, scopy(a podobne), ktore boli uz skor nastavene.
 	 *
 	 * @param int Aktualna hodnota unikatne PRIMARY KEY 
-	 * @return object Podla aktivneho modelu
+	 * @return bool|Opiner\ActiveRecord Podla uspesnosti najdenia riadku
 	 */
 
-	public function findByPk ($id)
-	{
-		if(!$data = Framework::module ('database')
-			-> select ()
-			-> table ($this -> tableName)
-			-> where (array_merge ($this -> conditions, [$this -> primaryKey => $id]))
-			-> order ($this -> primaryKey)
-			-> fetchRow ())
-		return false;
-		return new $this -> className ($data);
+	public function findByPk($id) {
+		
+		if(count(self::$primaryKeys[$this->tableName]) == 1)
+			$this->condition(current(self::$primaryKeys[$this->tableName]), (int)$id);
+		else foreach(self::$primaryKeys[$this->tableName] as $pk)
+			if(isset($id[$pk]))
+				$this->condition($pk, (int)$id[$pk]);
+		
+		$this->metaData = Framework::module('database')
+				->select()
+				->table($this->tableName)
+				->where($this->conditions)
+				->fetchRow();
+
+		if(!$this->metaData)
+			return false;
+			
+		$record = new $this->className($this);
+		$this->metaData = false;
+		return $record;
 	}
 
 
@@ -310,17 +421,17 @@ class Model extends Object {
 	 * @return array Pole objetov daneho modelu
 	 */
 
-	public function find ()
+	public function find()
 	{
-		$return = [];
-		foreach (Framework::module ('database')
-			-> select ()
-			-> table ($this -> tableName)
-			-> where ($this -> conditions)
-			-> order ($this -> order)
-			-> limit ($this -> limit, $this -> offset)
-			-> fetch () as $row)
-		$return [] = new $this -> className ($row);
+		$return =[];
+		foreach(Framework::module('database')
+			-> select()
+			-> table($this->tableName)
+			-> where($this->conditions)
+			-> order($this->order)
+			-> limit($this->limit, $this->offset)
+			-> fetch() as $row)
+		$return[] = new $this->className($row);
 		return $return;
 	}
 
@@ -336,14 +447,14 @@ class Model extends Object {
 	 * @since 0.6
 	 */
 
-	public function getAsJson ()
+	public function getAsJson()
 	{
-		$query = Framework::module ('database')
-			-> select ()
-			-> table ($this -> tableName);
-		if (!empty ($this -> conditions)) $query -> where ($this -> conditions);
-		if (!empty ($this -> order)) $query -> order ($this -> order);
-		return $query -> limit ($this -> limit, $this -> offset) -> fetchAsJson ();
+		$query = Framework::module('database')
+			-> select()
+			-> table($this->tableName);
+		if(!empty($this->conditions)) $query->where($this->conditions);
+		if(!empty($this->order)) $query->order($this->order);
+		return $query->limit($this->limit, $this->offset)->fetchAsJson();
 	}
 
 
@@ -360,9 +471,9 @@ class Model extends Object {
 	 * @since 0.6
 	 */
 
-	public function getIntoJsonFile ($file)
+	public function getIntoJsonFile($file)
 	{
-		file_put_contents ($file, $this -> getAsJson ());
+		file_put_contents($file, $this->getAsJson());
 		return $this;
 	}
 
@@ -379,14 +490,14 @@ class Model extends Object {
 	 * @since 0.6
 	 */
 
-	public function getAsCsv ($delimiter = ';')
+	public function getAsCsv($delimiter = ';')
 	{
-		$query = Framework::module ('database')
-			-> select ()
-			-> table ($this -> tableName);
-		if (!empty ($this -> conditions)) $query -> where ($this -> conditions);
-		if (!empty ($this -> order)) $query -> order ($this -> order);
-		return $query -> limit ($this -> limit, $this -> offset) -> fetchAsCsv ($delimiter);
+		$query = Framework::module('database')
+			-> select()
+			-> table($this->tableName);
+		if(!empty($this->conditions)) $query->where($this->conditions);
+		if(!empty($this->order)) $query->order($this->order);
+		return $query->limit($this->limit, $this->offset)->fetchAsCsv($delimiter);
 	}
 
 
@@ -404,9 +515,9 @@ class Model extends Object {
 	 * @since 0.6
 	 */
 
-	public function getIntoCsvFile ($file, $delimiter = ';')
+	public function getIntoCsvFile($file, $delimiter = ';')
 	{
-		file_put_contents ($file, $this -> getAsCsv ($delimiter));
+		file_put_contents($file, $this->getAsCsv($delimiter));
 		return $this;
 	}	
 }

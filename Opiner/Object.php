@@ -79,7 +79,7 @@ abstract class Object {
 		switch($level) {
 
 			case ERROR_LOG:
-				Framework::$log['errors'][] = $string;
+				Opiner::$log['errors'][] = $string;
 				return true;
 				break;
 

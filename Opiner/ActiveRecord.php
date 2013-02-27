@@ -202,7 +202,7 @@ abstract class ActiveRecord extends Object {
 		// Ak ide o novy zaznam
 		if($this->isNew) {
 			
-			$query = Framework::module('database')
+			$query = Opiner::module('database')
 					->insert(static::getTableName(), $this->storage)
 					->send();
 			
@@ -213,13 +213,13 @@ abstract class ActiveRecord extends Object {
 			$this->executeUpdate	= false;
 			
 			if($field = $this->model->getAutoIncrementField())
-				$this->storage[$field] = Framework::module('database')->getAutoIncrementValue();
+				$this->storage[$field] = Opiner::module('database')->getAutoIncrementValue();
 
 			return true;
 		}
 		else {
 			
-			$query = Framework::module('database')->update(static::getTableName(), $this->storage);
+			$query = Opiner::module('database')->update(static::getTableName(), $this->storage);
 			
 			if(!empty($this->primaryKeys)) {
 				foreach($this->primaryKeys as $pk)
@@ -250,7 +250,7 @@ abstract class ActiveRecord extends Object {
 
 	public final function delete()
 	{
-		$query = Framework::module('database')->delete(static::getTableName());
+		$query = Opiner::module('database')->delete(static::getTableName());
 		if(static::$primaryKey)
 			$query->where(static::$primaryKey, $this->activePrimaryKey);
 			else

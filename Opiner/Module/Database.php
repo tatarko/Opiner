@@ -72,7 +72,7 @@ class Database extends \Opiner\Module
 			$data = $this -> select ($this -> settings ['settings'] [1], $this -> settings ['settings'] [2]) -> table ($this -> settings ['settings'] [0]) -> fetch ();
 			if ($data)
 			foreach ($data as $row)
-			\Opiner\Framework::config ($row [$this -> settings ['settings'] [1]], $row [$this -> settings ['settings'] [2]], false);
+			\Opiner\Opiner::config ($row [$this -> settings ['settings'] [1]], $row [$this -> settings ['settings'] [2]], false);
 		}
 
 		/*if ($this -> settings ['relations'] === true)
@@ -143,15 +143,15 @@ class Database extends \Opiner\Module
 
 	protected function query ($string)
 	{
-		\Opiner\Framework::$log ['database'] [] = $string;
+		\Opiner\Opiner::$log ['database'] [] = $string;
 	        if ($this -> disable !== null)
 		{
-			self::error ($this -> disable . ' | Full Syntax: ' . $string, \Opiner\Framework::errorToLog);
+			self::error ($this -> disable . ' | Full Syntax: ' . $string, \Opiner\Opiner::errorToLog);
 			return false;
 		}
 		if (false === $result = mysql_query ($string, $this -> connection))
 		{
-			self::error (mysql_error(), \Opiner\Framework::errorToLog);
+			self::error (mysql_error(), \Opiner\Opiner::errorToLog);
 			$this -> segments = array ();
 			return false;
 		}

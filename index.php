@@ -1,4 +1,4 @@
 <?php
 include ('Opiner/Opiner.php');
-Opiner\Framework::compile('default');
+Opiner\Opiner::compile('default');
 ?>

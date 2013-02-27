@@ -191,7 +191,7 @@ class Form extends Object
 
 	public function putIntoTemplate ($name, $template = null)
 	{
-		$template === null ? Framework::module('template') : $template;
+		$template === null ? Opiner::module('template') : $template;
 		$array = [
 			'action'	=> $this -> action,
 			'actionString'	=> ' action="' . htmlspecialchars ((string)$this -> action, ENT_NOQUOTES) . '"',

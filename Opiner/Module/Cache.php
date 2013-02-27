@@ -63,7 +63,7 @@ class Cache extends \Opiner\Module
 	public function run ($cacheFile = null, $cacheFolder = null)
 	{
 		$this -> cacheFile = $cacheFile === null ? 'values.php' : $cacheFile;
-		$this -> cacheFolder = $cacheFolder === null ? \Opiner\Framework::getPrivateLocation () . 'cache/' : $cacheFolder;
+		$this -> cacheFolder = $cacheFolder === null ? \Opiner\Opiner::getPrivateLocation () . 'cache/' : $cacheFolder;
 		
 		// Kontrola existencie priecinka
 		if (!is_dir ($this -> cacheFolder))

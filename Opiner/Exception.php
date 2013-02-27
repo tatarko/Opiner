@@ -47,21 +47,25 @@ class Exception extends \Exception {
 
 			case 102:
 				$message = $this->getLocalMessage('errors.missingConfig', ucfirst($this->getMessage()));
-				$required = Framework::getLocation(LOCATION_CONFIG, $this->getMessage());
+				$required = Opiner::getLocation(LOCATION_CONFIG, $this->getMessage());
 				break;
 
 			case 103:
 				$message = $this->getLocalMessage('errors.missingLocationConstant', ucfirst($this->getMessage()));
 				break;
 
+			case 104:
+				$message = $this->getLocalMessage('errors.notValidateValue');
+				break;
+
 			case 110:
 				$message = $this->getLocalMessage('errors.missingModuleFile', ucfirst($this->getMessage()));
-				$required = Framework::getLocation(LOCATION_MODULE, $this->getMessage());
+				$required = Opiner::getLocation(LOCATION_MODULE, $this->getMessage());
 				break;
 
 			case 111:
 				$message = $this->getLocalMessage('errors.missingModule', ucfirst($this->getMessage()));
-				$required = Framework::getLocation(LOCATION_MODULE, $this->getMessage());
+				$required = Opiner::getLocation(LOCATION_MODULE, $this->getMessage());
 				break;
 
 			case 200:
@@ -78,7 +82,7 @@ class Exception extends \Exception {
 
 			case 210:
 				$message = $this->getLocalMessage('errors.modules.router.controllerFile', ucfirst($this->getMessage()));
-				$required = Framework::getLocation(LOCATION_CONTROLLER, $this->getMessage());
+				$required = Opiner::getLocation(LOCATION_CONTROLLER, $this->getMessage());
 				break;
 
 			case 220:
@@ -87,13 +91,13 @@ class Exception extends \Exception {
 
 			case 211:
 				$message = $this->getLocalMessage('errors.modules.router.controller', ucfirst($this->getMessage()));
-				$required = Framework::getLocation(LOCATION_CONTROLLER, $this->getMessage());
+				$required = Opiner::getLocation(LOCATION_CONTROLLER, $this->getMessage());
 				break;
 
 			case 212:
 				list($controller, $action) = explode('|', $this->getMessage());
 				$message = $this->getLocalMessage('errors.modules.router.action', ucfirst($controller), ucfirst($action));
-				$required = Framework::location('controller', $controller);
+				$required = Opiner::location('controller', $controller);
 				break;
 
 			case 221:
@@ -165,9 +169,9 @@ class Exception extends \Exception {
 
 	protected static function getLocalMessage($message)
 	{
-		if(Framework::module('language')
-		and Framework::module('language')->test($message))
-		return Framework::module('language')->translate(func_get_args());
+		if(Opiner::module('language')
+		and Opiner::module('language')->test($message))
+		return Opiner::module('language')->translate(func_get_args());
 
 		list($code, $param, $other) = array_merge(func_get_args(), ['', '']);
 		switch($code)
@@ -177,6 +181,7 @@ class Exception extends \Exception {
 			case 'errors.fileNotFound': return 'File was not found!';
 			case 'errors.missingConfig': return 'Configuration "' . $param . '" was not found!';
 			case 'errors.missingLocationConstant': return 'Location constant "' . $param . '" was not declared!';
+			case 'errors.notValidateValue': return 'Variable is not validate!';
 			case 'errors.missingModule': return 'Module "' . $param . '" was not declared in file!';
 			case 'errors.missingModuleFile': return 'File for module "' . $param . '" was not found!';
 			case 'errors.modules.cache.folder': return 'Cache folder "' . $param . '" does not exists!';

@@ -104,7 +104,7 @@ class Model extends Object {
 			self::$fields[$this->tableName]			= array();
 			self::$primaryKeys[$this->tableName]		= array();
 			
-			foreach(Framework::module('database')->getFieldList($this->tableName) as $field) {
+			foreach(Opiner::module('database')->getFieldList($this->tableName) as $field) {
 				
 				self::$fields[$this->tableName][$field['Field']] = new TableField($field);
 				
@@ -393,7 +393,7 @@ class Model extends Object {
 			if(isset($id[$pk]))
 				$this->condition($pk, (int)$id[$pk]);
 		
-		$this->metaData = Framework::module('database')
+		$this->metaData = Opiner::module('database')
 				->select()
 				->table($this->tableName)
 				->where($this->conditions)
@@ -424,7 +424,7 @@ class Model extends Object {
 	public function find()
 	{
 		$return =[];
-		foreach(Framework::module('database')
+		foreach(Opiner::module('database')
 			-> select()
 			-> table($this->tableName)
 			-> where($this->conditions)
@@ -449,7 +449,7 @@ class Model extends Object {
 
 	public function getAsJson()
 	{
-		$query = Framework::module('database')
+		$query = Opiner::module('database')
 			-> select()
 			-> table($this->tableName);
 		if(!empty($this->conditions)) $query->where($this->conditions);
@@ -492,7 +492,7 @@ class Model extends Object {
 
 	public function getAsCsv($delimiter = ';')
 	{
-		$query = Framework::module('database')
+		$query = Opiner::module('database')
 			-> select()
 			-> table($this->tableName);
 		if(!empty($this->conditions)) $query->where($this->conditions);

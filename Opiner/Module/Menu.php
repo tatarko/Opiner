@@ -170,7 +170,7 @@ class Menu extends \Opiner\Module
 		list ($title, $url, $position, $description, $into) = array_merge ($title, [null, null, null, null]);
 
 		$params ['title'] = $title;
-		$params ['url'] = (is_array ($url) or $url === null) ? \Opiner\Framework::module ('router') -> route ($url) : $url;
+		$params ['url'] = (is_array ($url) or $url === null) ? \Opiner\Opiner::module ('router') -> route ($url) : $url;
 		$params ['position'] = is_int ($position) ? $position : $this -> linkPositionCounter++;
 
 		if ($description !== null) $params ['description'] = $description;
@@ -198,7 +198,7 @@ class Menu extends \Opiner\Module
 		list ($title, $url, $position) = array_merge ($title, [null, null]);
 
 		$params ['title'] = $title;
-		$params ['url'] = is_array ($url) ? \Opiner\Framework::module ('router') -> route ($url) : $url;
+		$params ['url'] = is_array ($url) ? \Opiner\Opiner::module ('router') -> route ($url) : $url;
 		if ($description !== null) $params ['description'] = $description;
 
 		$this -> breadcrumbs [] = $params;
@@ -291,15 +291,15 @@ class Menu extends \Opiner\Module
 		// Pridanie omrviniek do templatu
 		if ($this -> breadcrumbs)
 		foreach ($this -> breadcrumbs as $breadcrumb)
-		\Opiner\Framework::module ('template') -> value ('menu/breadcrumbs', $breadcrumb);
+		\Opiner\Opiner::module ('template') -> value ('menu/breadcrumbs', $breadcrumb);
 
 		// Pridanie boxov do templatu
 		foreach ($this -> boxes as $box){}
-		\Opiner\Framework::module ('template') -> addMenu ($box ['name'], $box);
+		\Opiner\Opiner::module ('template') -> addMenu ($box ['name'], $box);
 
 		// Pridanie stackov do templatu
 		foreach ($this -> stacks as $stack)
-		\Opiner\Framework::module ('template') -> addMenu ($stack ['name'], $stack);
+		\Opiner\Opiner::module ('template') -> addMenu ($stack ['name'], $stack);
 
 		return $this;
 	}

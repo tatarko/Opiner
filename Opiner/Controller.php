@@ -38,10 +38,10 @@ abstract class Controller extends Object
 
 	public function __construct ()
 	{
-		$this -> db = Framework::module ('database');
-		$this -> temp = Framework::module ('template');
-		$this -> menu = Framework::module ('menu');
-		$this -> cache = Framework::module ('cache');
+		$this -> db = Opiner::module ('database');
+		$this -> temp = Opiner::module ('template');
+		$this -> menu = Opiner::module ('menu');
+		$this -> cache = Opiner::module ('cache');
 		return $this;
 	}
 
@@ -51,15 +51,15 @@ abstract class Controller extends Object
 	 * Vrati pozadovany modul
 	 *
 	 * Tato metoda je viac menej odkazom na rovnomennu metodu
-	 * triedy Framework
+	 * triedy materskej Opiner
 	 * 
 	 * @param string Unikatny nazov modulu, ktory chceme nacitat
-	 * @return object
+	 * @return Opiner\Module
 	 */
 
-	protected static function module ($localName)
-	{
-		return Framework::module ($localName);
+	protected static function module($localName) {
+		
+		return Opiner::module($localName);
 	}
 
 
@@ -80,7 +80,7 @@ abstract class Controller extends Object
 
 	protected static function t ($key)
 	{
-		return Framework::module ('language') -> translate (func_get_args ());
+		return Opiner::module ('language') -> translate (func_get_args ());
 	}
 
 
@@ -99,7 +99,7 @@ abstract class Controller extends Object
 
 	protected static function l ()
 	{
-		return Framework::module ('router') -> route (func_get_args ());
+		return Opiner::module ('router') -> route (func_get_args ());
 	}
 
 
@@ -116,7 +116,7 @@ abstract class Controller extends Object
 
 	protected static function addBox ($name, $title = null, $into = null)
 	{
-		return Framework::module ('menu') -> addBox ([
+		return Opiner::module ('menu') -> addBox ([
 			'name'	=> $name,
 			'title'	=> $title,
 			'into'	=> $into
@@ -136,7 +136,7 @@ abstract class Controller extends Object
 
 	protected static function addLink ($title, $url)
 	{
-		return Framework::module ('menu') -> addLink (func_get_args ());
+		return Opiner::module ('menu') -> addLink (func_get_args ());
 	}
 
 

@@ -55,8 +55,8 @@ class Language extends \Opiner\Module {
 		
 		if(self::isFile(\Opiner\ROOT . 'language/' . $language . '.php'))
 			$this->translations = array_merge($this->translations, require(\Opiner\ROOT . 'language/' . $language . '.php'));
-		if(self::isFile(\Opiner\Framework::getLocation(\Opiner\LOCATION_LANGUAGE, $language)))
-			$this->translations = array_merge($this->translations, require \Opiner\Framework::getLocation(\Opiner\LOCATION_LANGUAGE, $language));
+		if(self::isFile(\Opiner\Opiner::getLocation(\Opiner\LOCATION_LANGUAGE, $language)))
+			$this->translations = array_merge($this->translations, require \Opiner\Opiner::getLocation(\Opiner\LOCATION_LANGUAGE, $language));
 		return $this;
 	}
 

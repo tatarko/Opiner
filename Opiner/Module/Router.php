@@ -212,7 +212,7 @@ class Router extends \Opiner\Module
 		$this->controller->$actionName();
 
 		// Ukoncenie celeho procesu
-		\Opiner\Framework::module('template')->setView($this->view);
+		\Opiner\Opiner::module('template')->setView($this->view);
 		return $this;
 	}
 

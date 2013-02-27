@@ -52,7 +52,7 @@ class TableField extends Object {
 		$this->label			= ucwords(str_replace(array('.', '-', '_'), ' ', $meta['Field']));
 		$this->defaultValue		= $meta['Default'];
 		$this->autoIncrement	= strpos($meta['Extra'], 'auto_increment') === false ? false : true;
-		$this->required		= $meta['Null'] == 'NO' ? true : false;
+		$this->required			= $meta['Null'] == 'NO' ? true : false;
 		$this->validators		= self::getValidatorList($meta['Type']);
 		$this->primaryKey		= $meta['Key'] == 'PRI' ? true : false;
 	}
@@ -76,19 +76,26 @@ class TableField extends Object {
 		$validators = array();
 		
 		if(preg_match('#[a-z]*int\(([0-9]?)\)#ius', $type, $match)) {
-			$validators['integer']['min'] = -pow(2*8, $match[1] - 1);
-			$validators['integer']['max'] = pow(2*8, $match[1] - 1) - 1;
+			$validators['Integer']['min'] = -pow(2*8, $match[1] - 1);
+			$validators['Integer']['max'] = pow(2*8, $match[1] - 1) - 1;
 		}
 		
 		if(strpos($type, 'unsigned') !== false) {
-			$validators['integer']['max'] -= $validators['integer']['min'];
-			$validators['integer']['min'] = 0;
+			$validators['Integer']['max'] += $validators['Integer']['max'] + 1;
+			$validators['Integer']['min'] = 0;
 		}
 		
 		if(preg_match('#[a-z]*text#ius', $type, $match)) {
-			$validators['string'] = array();
+			$validators['String'] = array();
 		}
 		
+		foreach($validators as $index => $params) {
+			
+			$name = '\\' . __NAMESPACE__ . '\\Validator\\' . $index;
+			$validators[$index] = new $name($params);
+		}
+		
+		var_dump($validators);
 		return $validators;
 		$type = strpos($type, '(') !== false ? substr($type, 0, strpos($type, '(')) : $type;
 		switch($type)

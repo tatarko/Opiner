@@ -28,21 +28,36 @@ abstract class ActiveRecord extends Object {
 	
 	/**
 	 * @var array Hodnoty primarnych klucov pre dany row
+	 * @since 0.6
 	 */
 	protected $primaryKeys = array();
 	
 	/**
 	 * @var bool Je tento zaznam novy?
 	 */
-	protected $isNew = false;
+	protected $isNew = true;
 	
 	/**
-	 * @var bool Hodnoty primarnych klucov pre dany row
+	 * @var bool|null Boli hodnoty zaznamu zvalidovane?
+	 * @since 0.6
 	 */
-	protected $executeUpdate = false;
+	protected $validated = null;
+	
+	/**
+	 * @var array Povodne hodnoty zmenenych poli
+	 * @since 0.6
+	 */
+	protected $backupStorage = array();
+	
+	/**
+	 * @var array Povodne hodnoty zmenenych poli
+	 * @since 0.6
+	 */
+	protected $errors = array();
 	
 	/**
 	 * @var Opiner\Model Model pre dany tok dat
+	 * @since 0.6
 	 */
 	protected $model;
 
@@ -58,15 +73,17 @@ abstract class ActiveRecord extends Object {
 	 * poctom argumentov, tak objekt bude predstatovat
 	 * existujuci zaznam v tabulke.
 	 *
-	 * @param array Data aktualneho riadka v tabulke
+	 * @param Opiner\Model Data aktualneho riadka v tabulke
 	 * @return Opiner\ActiveRecord
 	 */
 
-	public final function __construct(Model $model = null) {
+	public function __construct(Model $model = null) {
 		
 		if($model !== null && $model instanceof Model) {
-			$this->model = $model;
-			$this->isNew = false;
+
+			$this->model		= $model;
+			$this->isNew		= false;
+			$this->validated	= true;
 		}
 		else $this->model = new Model($this);
 		
@@ -93,18 +110,23 @@ abstract class ActiveRecord extends Object {
 	 * @param string Ktoru hodnotu chceme menit
 	 * @param mixed Nova hodnota tejto premennej
 	 * @return mixed Aktualna hodnota premennej
+	 * @throws Opiner\Exception Ak field v tabulke neexistuje
 	 */
 
-	public  function __set($field, $value)
-	{
+	public function __set($field, $value) {
+
 		// Je takyto field v danej tabulke?
 		if(!key_exists($field, $this->storage))
 		throw new Exception($field, 300);
 
 		// Ako bude vyzerat nova hodnota, bude nutny update DB?		
-		if($value !== $this->storage[$field]) $this->executeUpdate = true;
-		$this->storage[$field] = $value;
-		return $value;
+		if($value !== $this->storage[$field]) {
+			
+			$this->backupStorage[$field] = $value;
+			$this->validated = null;
+		}
+		
+		return $this->storage[$field] = $value;
 	}
 
 
@@ -118,10 +140,11 @@ abstract class ActiveRecord extends Object {
 	 *
 	 * @param string Ktoru hodnotu chceme dostat
 	 * @return mixed Aktualna hodnota premennej
+	 * @throws Opiner\Exception Ak field v tabulke neexistuje
 	 */
 
-	public final function __get($field)
-	{
+	public function __get($field) {
+		
 		if(!key_exists($field, $this->storage))
 		throw new Exception($field, 300);
 		return $this->storage[$field];
@@ -136,12 +159,12 @@ abstract class ActiveRecord extends Object {
 	 * bunka s predanym nazvom v tabulke realne existuje
 	 *
 	 * @param string Nazov bunky, ktorej eixstenciu chceme overit
-	 * @return boolean
+	 * @return bool
 	 */
 
-	public final function __isset($field)
-	{
-		return array_search($field, static::$fields) === false ? false : true;
+	public function __isset($field) {
+		
+		return key_exists($field, $this->storage) ? true : false;
 	}
 
 
@@ -155,32 +178,30 @@ abstract class ActiveRecord extends Object {
 	 * kompilovania frameworku.
 	 *
 	 * @param string Kam ide pokus
+	 * @throws Opiner\Exception Field z tabulky nie je mozne zmazat
 	 */
 
-	public final function __unset($field)
-	{
+	public function __unset($field) {
+		
 		throw new Exception($field, 301);
 	}
 
-
-
+	
+	
 	/**
-	 * Pripravi vnutorny ulozny priestor
-	 *
-	 * Ak nie su dane, zisti informacie o tabulke, parametroch
-	 * fieldov a podobne. Dalej pripravi vnutorny storage priestor,
-	 * ponastavuje vsetky potrebne premenne pre spravny beh celeho modelu
-	 *
-	 * @return object
+	 * Vratenie vsetkuch zmien
+	 * 
+	 * Vsetky pozmenene hodnoty v jednotlivych bunkach
+	 * tabulky vrati spat na ich povodne hodnoty.
+	 * @return \Opiner\ActiveRecord
+	 * @since 0.6
 	 */
-
-	protected final function prepareStorage()
-	{
-		if(empty(static::$fields))
-		static::prepareMeta();
-
-		foreach(static::$fields as $field)
-		$this->storage[$field] = static::$fieldData[$field]['default'];
+	public function reset() {
+		
+		$this->validated		= null;
+		$this->storage			= array_merge($this->storage, $this->backupStorage);
+		$this->backupStorage	= array();
+		return $this;
 	}
 
 
@@ -197,20 +218,27 @@ abstract class ActiveRecord extends Object {
 	 * @return boolean Vykonala sa query na DB spravne?
 	 */
 
-	public final function save() {
+	public function save() {
+		
+		// Kontrola validovania
+		if($this->validated === null)
+			$this->validate();
+		
+		if($this->validated !== true) {
+			$this->validated = null;
+			return false;
+		}
 		
 		// Ak ide o novy zaznam
 		if($this->isNew) {
 			
-			$query = Opiner::module('database')
-					->insert(static::getTableName(), $this->storage)
-					->send();
+			$query = Opiner::module('database')->insert(static::getTableName(), $this->storage)->send();
 			
 			if(!$query)
 				return false;
 			
 			$this->isNew			= false;
-			$this->executeUpdate	= false;
+			$this->backupStorage	= array();
 			
 			if($field = $this->model->getAutoIncrementField())
 				$this->storage[$field] = Opiner::module('database')->getAutoIncrementValue();
@@ -220,17 +248,12 @@ abstract class ActiveRecord extends Object {
 		else {
 			
 			$query = Opiner::module('database')->update(static::getTableName(), $this->storage);
-			
-			if(!empty($this->primaryKeys)) {
-				foreach($this->primaryKeys as $pk)
-					$where[$pk] = $this->storage[$pk];
-				$query->where($where);
-			}
+			$this->updateFilteringQuery($query);
 			
 			if(!$query->send())
 				return false;
 
-			$this->executeUpdate = false;
+			$this->backupStorage = array();
 			return true;
 		}
 	}
@@ -248,18 +271,43 @@ abstract class ActiveRecord extends Object {
 	 * @since 0.6
 	 */
 
-	public final function delete()
-	{
+	public function delete() {
+		
 		$query = Opiner::module('database')->delete(static::getTableName());
-		if(static::$primaryKey)
-			$query->where(static::$primaryKey, $this->activePrimaryKey);
-			else
-		if($query->send())
-		{
+		$this->updateFilteringQuery($query);
+
+		if($query->send()) {
+			
 			unset($this);
 			return true;
 		}
 		else return false;
+	}
+	
+	
+	
+	/**
+	 * Vyfiltrovanie iba tych spravnych vysledkov pri aktualizovani
+	 * a mazani zaznamov z tabulky
+	 * @param \Opiner\Module\Database $query
+	 * @return \Opiner\ActiveRecord
+	 */
+	protected function updateFilteringQuery(Module\Database $query) {
+					
+		// Ak mozeme vyhladavat na zaklade primarnych klucov
+		if(!empty($this->primaryKeys)) {
+			foreach($this->primaryKeys as $pk)
+				$where[$pk] = isset($this->backupStorage[$pk]) ? $this->backupStorage[$pk] : $this->storage[$pk];
+			$query->where($where);
+		}
+			
+		// inak vyhladavane podla povodnych premennych
+		else {
+			foreach($this->storage as $field => $value)
+				$where[$field] = isset($this->backupStorage[$field]) ? $this->backupStorage[$field] : $value;
+			$query->where($where)->limit(1);
+		}
+		return $this;
 	}
 
 
@@ -269,11 +317,10 @@ abstract class ActiveRecord extends Object {
 	 *
 	 * Tato metoda ziska nazov aktualnej triedy a na zaklade toho
 	 * odvodi nazov tabulky, s ktorou pracuje dany model.
-	 *
 	 * @return string
 	 */
 
-	public final static function getTableName() {
+	public static function getTableName() {
 		
 		if(strpos(get_called_class(), '\\') !== false)
 			return substr(get_called_class(), strrpos(get_called_class(), '\\') + 1);
@@ -289,13 +336,33 @@ abstract class ActiveRecord extends Object {
 	 * ktora zabezpecuje vyber riadkov tabulky na zaklade predanych
 	 * pravidiel. Ak nie je predany argument model, tak 
 	 *
-	 * @return Opiner/Model
+	 * @return Opiner\Model
 	 */
 
-	public final static function model() {
+	public static function model() {
 		
 		$class = get_called_class();
 		return new Model(new $class);
+	}
+
+
+
+	/**
+	 * Validovanie hodnot ActiveRecordu
+	 * @return bool
+	 */
+	public function validate() {
+		
+		$this->validated = true;
+		
+		foreach($this->storage as $field => $value) {
+			$result = $this->model->validate($field, $value);
+			if(is_array($result)) {
+				$this->validated = false;
+				$this->errors = array_merge($this->errors, $result);
+			}
+		}
+		return $this->validated;
 	}
 }
 

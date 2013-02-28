@@ -306,13 +306,13 @@ class Model extends Object {
 	 * 
 	 * @param string Podla ktorej bunky zoradit vysledky
 	 * @param string V akom poradi?
-	 * @return object
+	 * @return Opiner\Model
 	 */
 
 	public function order($field, $by = 'asc') {
 		
 		if(!isset($this->fields[$field]))
-		throw new Exception($index, 305, $this->tableName);
+		throw new Exception($field, 305, $this->tableName);
 		$this->order = $field . '#' . $by;
 		return $this;
 	}
@@ -519,6 +519,33 @@ class Model extends Object {
 	{
 		file_put_contents($file, $this->getAsCsv($delimiter));
 		return $this;
-	}	
+	}
+
+
+
+	/**
+	 * Validacia hodnoty toho ktoreho fieldu tabulky
+	 * @param string $field Nazov fieldu na validaciu
+	 * @param mixed $value Hodnota na zvalidovania
+	 * @return bool|array TRUE alebo pole chybovych hlasok
+	 * @throws Opiner\Exception
+	 */
+	public function validate($field, $value) {
+		
+		$status = true;
+		$errors = array();
+
+		if(!isset(self::$fields[$this->tableName][$field]))
+			throw new Exception($field, 300);
+		
+		foreach(self::$fields[$this->tableName][$field] as $validator) {
+			$validator->setValue($value);
+			if($validator->validate())
+				$status = true;
+			$errors = array_merge($errors, $validator->getErrors());
+		}
+		
+		return $status ? $status : $errors;
+	}
 }
 ?>

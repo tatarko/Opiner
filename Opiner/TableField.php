@@ -95,7 +95,6 @@ class TableField extends Object {
 			$validators[$index] = new $name($params);
 		}
 		
-		var_dump($validators);
 		return $validators;
 		$type = strpos($type, '(') !== false ? substr($type, 0, strpos($type, '(')) : $type;
 		switch($type)
@@ -162,7 +161,7 @@ class TableField extends Object {
 	 * Je to auto_increment hodnota?
 	 * @return bool
 	 */
-	public function isAutoIcrement() {
+	public function isAutoIncrement() {
 		
 		return $this->autoIncrement;
 	}

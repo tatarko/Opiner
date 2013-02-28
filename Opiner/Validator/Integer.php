@@ -32,7 +32,7 @@ class Integer extends \Opiner\Validator {
 	 * ci kontrolovana hodnota je cislom. Ak ano, tak
 	 * kontroluje aj, ci je v rozmedzi minimalnej
 	 * a maximalnej pripustnej hodnoty (ak su zadane).
-	 * @return boolean
+	 * @return bool
 	 */
 	public function validate() {
 		
@@ -56,11 +56,12 @@ class Integer extends \Opiner\Validator {
 		
 		return $this->isCorrect = $status;
 	}
-	
+
+
+
 	/**
 	 * Vrati spravne naformatovanu hodnotu
 	 * @return int
-	 * @throws Opiner\Exception Ak hodnota neprebehla validaciou (vobec alebo uspesne)
 	 */
 	public function getFilteredValue() {
 	

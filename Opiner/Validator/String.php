@@ -12,12 +12,24 @@ namespace Opiner\Validator;
  * @since 0.6
  */
 class String extends \Opiner\Validator {
-	
+
+
+
+	/**
+	 * Skontroluje hodnotu
+	 * @return bool
+	 */	
 	public function validate() {
 		
 		return true;
 	}
-	
+
+
+
+	/**
+	 * Vrati spravne naformatovanu hodnotu
+	 * @return string
+	 */
 	public function getFilteredValue() {
 	
 		return (string)$this->value;

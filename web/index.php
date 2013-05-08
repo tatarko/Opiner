@@ -1,4 +1,4 @@
 <?php
-include ('Opiner/Opiner.php');
-Opiner\Opiner::compile('default');
+require_once dirname(__DIR__) . '/framework/Opiner.php';
+Opiner\Opiner::createWebApplication();
 ?>

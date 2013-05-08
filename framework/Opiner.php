@@ -2,20 +2,50 @@
 
 namespace Opiner;
 
+/**
+ * Framework name
+ */
 const NAME = 'Opiner';
-const VERSION = '0.6';
-const URL = 'http://tatarko.github.com/Opiner/';
-
-const AUTHOR = 'Tomáš Tatarko';
-const AUTHOR_URL = 'http://tatarko.sk/';
-
-const DEFAULT_CONTENT_TYPE = 'text/html';
-const DEFAULT_CHARSET = 'UTF-8';
-
-const CLASS_FILE_EXTENSION = '.php';
 
 /**
- * Description of Opiner
+ * Version of framework
+ */
+const VERSION = '0.1';
+
+/**
+ * Link to official website
+ */
+const URL = 'http://tatarko.github.com/Opiner/';
+
+/**
+ * Name of author
+ */
+const AUTHOR = 'Tomáš Tatarko';
+
+/**
+ * Link to author's website
+ */
+const AUTHOR_URL = 'http://tatarko.sk/';
+
+/**
+ * Default content type of generated websites
+ */
+const DEFAULT_CONTENT_TYPE = 'text/html';
+
+/**
+ * Default charset to be used
+ */
+const DEFAULT_CHARSET = 'UTF-8';
+
+/**
+ * Suffix used for autoloading class file
+ */
+const CLASS_FILE_SUFFIX = '.php';
+
+/**
+ * Starter class for doing basic stuff
+ * such as creating application and
+ * unmasking different aliases.
  *
  * @author Tomas Tatarko <tomas@tatarko.sk>
  * @link https://github.com/tatarko/Opiner
@@ -23,8 +53,22 @@ const CLASS_FILE_EXTENSION = '.php';
  * @license GPL 3
  * @since 0.1
  */
-
 class Opiner {
+	
+	/**
+	 * Unmask as a file name
+	 */
+	const PATH_ALIAS_FILE = 1;
+	
+	/**
+	 * Unmask as a directory name
+	 */
+	const PATH_ALIAS_DIRECTORY = 2;
+	
+	/**
+	 * Unmask all types
+	 */
+	const PATH_ALIAS_ALL = 3;
 
 	/**
 	 * @var Opiner\Interfaces\Application Currently active application
@@ -32,7 +76,7 @@ class Opiner {
 	public static $application;
 
 	/**
-	 * 
+	 * Getter for current active application
 	 * @return Opiner\Interfaces\Application Current initatied application
 	 */
 	public static function app() {
@@ -47,17 +91,31 @@ class Opiner {
 		}
 	}
 
+	/**
+	 * Overriding magic method for calling static methods
+	 * 
+	 * If called method's name starts with "create", new application
+	 * instance will be created with type definied after create keyword
+	 * (word "application" will be dismissed). In other cases it will be checked
+	 * if exists some application and if yes, the application's compomenent named
+	 * as a called method will be returned.
+	 * 
+	 * @param string $name Name of component to be returned or type of application to be created
+	 * @param mixed[] $params
+	 * @return Opiner\Component
+	 */
 	public static function __callStatic($name, $params) {
 
 		if(strtolower(substr($name, 0, 6)) == 'create') {
 			
-			$name		= ucfirst(strtolower(str_replace(['create', 'application'], '', $name)));
+			$name		= ucfirst(str_replace(['create', 'application'], '', strtolower($name)));
 			$className	= static::getClassByAlias('application', $name);
 			$configFile	= isset($params[1]) ? $params[1] : null;
 			
 			if(class_exists($className)) {
 				
-				static::$application = (new $className($configFile))->init();
+				static::$application = new $className($configFile);
+				static::$application->init();
 				return static::$application;
 			}
 			else {
@@ -72,7 +130,7 @@ class Opiner {
 	}
 	
 	/**
-	 * Get full name of class (with namespaces) according to alias
+	 * Get full name of class (with namespace) according to alias
 	 * @param string... $alias
 	 * @return string
 	 */
@@ -81,7 +139,7 @@ class Opiner {
 		foreach(func_get_args() as $param) {
 
 			foreach(explode('.', $param) as $fragment) {
-				
+
 				$fragments[] = $fragment;
 			}
 		}
@@ -94,45 +152,74 @@ class Opiner {
 		return '\\' . implode('\\', $fragments);
 	}
 	
-	public static function getPathOfAlias($alias) {
-		
-		for($i = 0; $i < count($fragments) - 1; ++$i) {
+	/**
+	 * Get real path according to given alias
+	 * @param string $alias Alias of class/directory
+	 * @param int $type One or more types to be unmasking (according to class constants starting with PATH_ALIAS_)
+	 * @return string Unmasked path
+	 */
+	public static function getPathOfAlias($alias, $type = self::PATH_ALIAS_ALL) {
 
-			$fragments[$i] = strtolower($fragments[0]);
-		}
+		$return		= array();
+		$alias		= str_replace('.', '\\', $alias);
+		$fragments	= array_filter(explode('\\', $alias));
 
-		if($fragments[0] == 'opiner') {
+		array_walk($fragments, function(&$var){
 
-			$location = dirname(__FILE__);
+			$var = strtolower($var);
+
+			if(!in_array($var, ['opiner', 'interfaces'])) {
+
+				$var .= substr($var, -1) == 'y' ? substr($var, -1) . 'ies' : 's';
+			}
+		});
+
+		// Getting path to directory
+		if($fragments[0] == 'opiner' || !static::$application) {
+
+			$return['directory'] = static::getFrameworkPath()
+				. implode(DIRECTORY_SEPARATOR, $fragments)
+				. DIRECTORY_SEPARATOR;
 		}
 		else {
 
-			if(static::$application) {
-
-				$location = static::$application->getApplicationPath();
-			}
-			else {
-				
-			}
+			$return['directory'] = static::$application->getApplicationPath()
+				. implode(DIRECTORY_SEPARATOR, $fragments)
+				. DIRECTORY_SEPARATOR;
 		}
-		
-		for($i = 0; $i < count($fragments) - 1; ++$i) {
 
-			$fragments[$i] = strtolower($fragments[0]);
+		// Getting path to class
+		if($type & self::PATH_ALIAS_FILE) {
+
+			$return['file']				= explode(DIRECTORY_SEPARATOR, $return['directory'], -1);
+			$lastKey					= count($return['file']) - 1;
+			$return['file'][$lastKey]	= ucfirst($return['file'][$lastKey]);
+			$return['file'][$lastKey]	= substr($return['file'][$lastKey], 0, substr($return['file'][$lastKey], -3) == 'ies' ? -3 : -1);
+			$return['file']				= implode(DIRECTORY_SEPARATOR, $return['file']) . CLASS_FILE_SUFFIX;
+		}
+
+		// Unsetting path to directory if it is not requested
+		if(($type & self::PATH_ALIAS_DIRECTORY) == 0) {
+
+			unset($return['directory']);
+		}
+
+		// Returning data
+		switch(count($return)) {
+
+			case 0: return null; break;
+			case 1: return current($return); break;
+			default: return $return; break;
 		}
 	}
 	
-	public static function loadClass($className) {
+	/**
+	 * Getting path to framework files
+	 * @return string
+	 */
+	public static function getFrameworkPath() {
 
-		$fragments = array_filter(explode('\\', $className), function($data) {
-
-			return !empty($data);
-		});
-
-		$class		= end($fragments);
-		$classPath	= static::getPathOfAlias(substr(implode('.', $fragments), 0, -strlen($class)));
-
-		return $classPath . DIRECTORY_SEPARATOR . $class . CLASS_FILE_EXTENSION;
+		return dirname(__FILE__) . DIRECTORY_SEPARATOR;
 	}
 }
 
@@ -141,6 +228,6 @@ class Opiner {
  */
 spl_autoload_register(function($class) {
 
-	require_once Opiner::loadClass($class, PATH_ALIAS_FILE);
+	require_once Opiner::getPathOfAlias($class, Opiner::PATH_ALIAS_FILE);
 });
 ?>

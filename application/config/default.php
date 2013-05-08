@@ -9,7 +9,7 @@ return array(
 		'db' => array(
 		
 			'class'			=> 'database',
-			'connection'	=> 'sqlite:' . $this->storagePath . 'default.db',
+			'connection'	=> 'sqlite:' . $this->storagePath . 'database/default.sqlite',
 		)
 	)
 );

@@ -144,10 +144,20 @@ class Opiner {
 			}
 		}
 
-		array_walk($fragments, function($data){
+		array_walk($fragments, function(&$data){
 
-			return ucfirst($data);
+			$data = ucfirst($data);
 		});
+		
+		if($fragments[0] != 'Opiner') {
+
+			$secondary = array_merge(['Opiner'], $fragments);
+
+			if(!class_exists('\\' . implode('\\', $fragments))) {
+
+				return '\\' . implode('\\', $secondary);
+			}
+		}
 
 		return '\\' . implode('\\', $fragments);
 	}

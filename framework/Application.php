@@ -1,6 +1,7 @@
 <?php
 
 namespace Opiner;
+use Opiner\Interfaces\Component as IComponent;
 
 /**
  * Default application class
@@ -14,11 +15,40 @@ namespace Opiner;
  */
 abstract class Application extends Object {
 
+	/**
+	 * Return NULL if component is not found
+	 */
+	const MISSING_COMPONENT_NULL = 1;
+
+	/**
+	 * Throw error/exception if component is not found
+	 */
+	const MISSING_COMPONENT_THROW = 2;
+
+	/**
+	 * @var \Opiner\Component[] Application components
+	 */
 	protected $components;
+
+	/**
+	 * @var mixed[] Application configuration 
+	 */
 	protected $config;
+
+	/**
+	 * @var string Path to the application folder
+	 */
 	protected $applicationPath;
+
+	/**
+	 * @var string Path to the storage folder
+	 */
 	protected $storagePath;
-	protected $isInitiated = false;
+
+	/**
+	 * @var bool Flag marking if application has already been initialized
+	 */
+	protected $isInitialized = false;
 
 	/**
 	 * Constructor of application
@@ -55,10 +85,12 @@ abstract class Application extends Object {
 	 * Initiate application
 	 * 
 	 * All of application components will be loaded
+	 * 
+	 * @return \Opiner\Application
 	 */
 	public function init() {
 
-		$this->isInitiated = true;
+		$this->isInitialized = true;
 
 		if(!isset($this->config['components'])) {
 			
@@ -73,17 +105,18 @@ abstract class Application extends Object {
 		foreach($this->config['components'] as $index => $config) {
 			
 			$className		= ucfirst(@$config['class'] ?: $index);
-			$realClassName	= strpos($className, '.') === false && strpos($className, '\\') === false ? $className : Opiner::getClassByAlias('component', $className);
+			$realClassName	= strpos($className, '.') === false && strpos($className, '\\') === false ? Opiner::getClassByAlias('component', $className) : $className;
 
-			unset($config['class']);
+			$component = new $realClassName;
 
-			$component = new $realClassName($config);
-			
-			if(!$component instanceof Component) {
-				
+			if(!$component instanceof IComponent) {
+
 				$this->throwError('"' . $realClassName . '" is not an instance of Component', 101);
 				continue;
 			}
+
+			unset($config['class']);
+			$component->init($config);
 		}
 	}
 
@@ -100,7 +133,7 @@ abstract class Application extends Object {
 	 */
 	public function throwError($message, $code = 100) {
 
-		if($this->isInitiated) {
+		if($this->isInitialized) {
 
 			throw new Exception($message, $code);
 		}
@@ -131,6 +164,35 @@ abstract class Application extends Object {
 	 * Run application
 	 */
 	abstract public function run();
+
+	/**
+	 * Get application component by type
+	 * @param string $name Name of the (parent) class
+	 * @param int $missing Flag: what to do if component will not be found
+	 * @return Opiner\Component
+	 * @throws Exception If $missing flag is set to throw and component is not found
+	 */
+	public function getComponentByType($name, $missing = self::MISSING_COMPONENT_NULL) {
+
+		foreach($this->components as $component) {
+
+			if($component instanceof $name) {
+
+				return $component;
+			}
+		}
+
+		switch($missing) {
+
+			case self::MISSING_COMPONENT_NULL:
+				return null;
+				break;
+
+			case self::MISSING_COMPONENT_THROW:
+				$this->throwError('Application does not have component of type "' . $name . '"');
+				break;
+		}
+	}
 
 	/**
 	 * Returns path to application folder
@@ -179,9 +241,9 @@ abstract class Application extends Object {
 	 * Checks if application has been initiated yet
 	 * @return bool
 	 */
-	public function isInitiated() {
+	public function getIsInitialized() {
 
-		return $this->isInitiated;
+		return $this->isInitialized;
 	}
 }
 ?>

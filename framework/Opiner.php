@@ -204,7 +204,7 @@ class Opiner {
 		}
 		else {
 
-			$return['directory'] = static::$application->getApplicationPath()
+			$return['directory'] = static::$application->applicationPath
 				. implode(DIRECTORY_SEPARATOR, $fragments)
 				. DIRECTORY_SEPARATOR;
 		}

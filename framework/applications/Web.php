@@ -15,7 +15,7 @@ use Opiner\Opiner;
 class Web extends \Opiner\Application {
 
 	public function run() {
-		
+
 		$this->getComponentByType(Opiner::getClassByAlias('component.router'), self::MISSING_COMPONENT_THROW);
 	}
 }

@@ -164,6 +164,11 @@ class Opiner {
 		$alias		= str_replace('.', '\\', $alias);
 		$fragments	= array_filter(explode('\\', $alias));
 
+		if(empty($fragments)) {
+
+			return null;
+		}
+
 		array_walk($fragments, function(&$var){
 
 			$var = strtolower($var);
@@ -174,9 +179,15 @@ class Opiner {
 			}
 		});
 
-		// Getting path to directory
-		if($fragments[0] == 'opiner' || !static::$application) {
+		$inFramework = $fragments[0] == 'opiner';
 
+		// Getting path to directory
+		if($inFramework || !static::$application) {
+
+			if($inFramework) {
+
+				unset($fragments[0]);
+			}
 			$return['directory'] = static::getFrameworkPath()
 				. implode(DIRECTORY_SEPARATOR, $fragments)
 				. DIRECTORY_SEPARATOR;
@@ -196,6 +207,11 @@ class Opiner {
 			$return['file'][$lastKey]	= ucfirst($return['file'][$lastKey]);
 			$return['file'][$lastKey]	= substr($return['file'][$lastKey], 0, substr($return['file'][$lastKey], -3) == 'ies' ? -3 : -1);
 			$return['file']				= implode(DIRECTORY_SEPARATOR, $return['file']) . CLASS_FILE_SUFFIX;
+			
+			if(static::$application && !$inFramework && !file_exists($return['file'])) {
+				
+				$return['file'] = static::getPathOfAlias(implode('.', array_merge(['opiner'], $fragments)), static::PATH_ALIAS_FILE);
+			}
 		}
 
 		// Unsetting path to directory if it is not requested
@@ -228,6 +244,11 @@ class Opiner {
  */
 spl_autoload_register(function($class) {
 
-	require_once Opiner::getPathOfAlias($class, Opiner::PATH_ALIAS_FILE);
+	$filename = Opiner::getPathOfAlias($class, Opiner::PATH_ALIAS_FILE);
+
+	if(file_exists($filename)) {
+
+		require_once $filename;
+	}
 });
 ?>

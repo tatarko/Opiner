@@ -85,7 +85,7 @@ class Filecache extends Cache {
 
 		if(!is_dir($this->storageFolder) || !is_writable($this->storageFolder)) {
 
-//			throw new Exception('Given cache path is not valid or script is not allowed to write into it', 125);
+			throw new Exception('Given cache path is not valid or script is not allowed to write into it', 125);
 			return false;
 		}
 
@@ -155,7 +155,7 @@ class Filecache extends Cache {
 
 		while($filename = readdir($directory)) {
 
-			if(!in_array($filename, ['.', '..'])) {
+			if(!in_array($filename, ['.', '..', '.gitignore']) && !is_dir($this->storageFolder . $filename)) {
 
 				$return = unlink($this->storageFolder . $filename) && $return;
 			}

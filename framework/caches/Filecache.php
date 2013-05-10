@@ -34,7 +34,7 @@ class Filecache extends Cache {
 	/**
 	 * Maximum value length to store just in index table (if larger, goes into file)
 	 */
-	const MAX_INDEX_LENGTH = 256;
+	const MAX_INDEX_LENGTH = 1024;
 
 	/**
 	 * Extension of cache files
@@ -81,7 +81,7 @@ class Filecache extends Cache {
 
 		$this->storageFolder = isset($settings['path'])
 				? $settings['path']
-				: Opiner::app()->getStoragePath() . '/cache/';
+				: Opiner::app()->getStoragePath() . 'cache/';
 
 		if(!is_dir($this->storageFolder) || !is_writable($this->storageFolder)) {
 
@@ -255,7 +255,6 @@ class Filecache extends Cache {
 		if(!file_exists($this->storageFolder . $filename . self::CACHE_FILE_EXTENSION)) {
 
 			$this->deleteByHash($filename);
-			echo $filename;
 			return self::MISSING_ITEM;
 		}
 

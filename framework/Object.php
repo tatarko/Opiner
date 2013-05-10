@@ -3,6 +3,16 @@
 namespace Opiner;
 
 /**
+ * Get public properties for an object
+ * @param object $obj
+ * @return string[]
+ */
+function getPublicProperties($obj) {
+
+	return is_object($obj) ? array_keys(get_object_vars($obj)) : array();
+}
+
+/**
  * Basic class for all objects used in framework
  * 
  * Defines basic magic methods such as __construct,
@@ -19,12 +29,12 @@ class Object {
 	/**
 	 * @var mixed[] Stack of values that can be changed publicly
 	 */
-	protected $stack = array();
+	protected $stack = [];
 
 	/**
 	 * @var string[] List of public properties
 	 */
-	protected $_publicProperties = array();
+	protected $_publicProperties = [];
 
 	/**
 	 * Constructor
@@ -34,12 +44,7 @@ class Object {
 	 */
 	public function __construct() {
 
-		$callback = function($object) {
-
-			return get_object_vars($object);
-		};
-
-		$this->_publicProperties = $callback($this);
+		$this->_publicProperties = getPublicProperties($this);
 
 		return $this;
 	}

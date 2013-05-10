@@ -2,7 +2,8 @@
 
 namespace Opiner\Component;
 use Opiner\Interfaces\Cache as ICache;
-use Opiner\Opiner as Opiner;
+use Opiner\Opiner;
+use \Exception;
 
 /**
  * Cache component
@@ -29,7 +30,7 @@ class Cache extends \Opiner\Component implements ICache {
 		parent::init($settings);
 
 		$interface		= Opiner::getClassByAlias('opiner.interfaces.cache');
-		$className		= Opiner::getClassByAlias('cache', $this->fetchConfig('mechanism', 'file'));
+		$className		= Opiner::getClassByAlias('cache', $this->fetchConfig('mechanism', 'filecache'));
 		$this->cache	= new $className;
 
 		if(!$this->cache instanceof $interface) {
@@ -37,7 +38,7 @@ class Cache extends \Opiner\Component implements ICache {
 			$this->isInitialized = false;
 			throw new Exception('Given class name is not valid instance of Cache interface', 123);
 		}
-		elseif(!$this->cache->connect()) {
+		elseif(!$this->cache->connect($this->settings)) {
 
 			$this->isInitialized = false;
 			throw new Exception('Could not connect to Cache mechanism', 124);
@@ -199,7 +200,7 @@ class Cache extends \Opiner\Component implements ICache {
 	 * Connect to cache ({@link:init()} will be called)
 	 * @return bool
 	 */
-	public function connect() {
+	public function connect($settings) {
 
 		if(!$this->isInitialized) {
 
@@ -207,6 +208,14 @@ class Cache extends \Opiner\Component implements ICache {
 		}
 
 		return $this->isInitialized;
+	}
+
+	/**
+	 * Disconnect cache mechanism
+	 */
+	public function disconnect() {
+
+		$this->cache->disconnect();
 	}
 }
 

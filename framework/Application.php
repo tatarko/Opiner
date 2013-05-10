@@ -28,7 +28,7 @@ abstract class Application extends Object {
 	/**
 	 * @var \Opiner\Component[] Application components
 	 */
-	protected $components;
+	protected $components = [];
 
 	/**
 	 * @var mixed[] Application configuration 
@@ -117,6 +117,19 @@ abstract class Application extends Object {
 
 			unset($config['class']);
 			$component->init($config);
+			$this->components[$index] = $component;
+		}
+	}
+
+	public function __get($name) {
+
+		if(key_exists($name, $this->components)) {
+
+			return $this->components[$name];
+		}
+		else {
+
+			parent::__get($name);
 		}
 	}
 

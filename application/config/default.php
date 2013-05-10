@@ -10,7 +10,9 @@ return array(
 		
 			'class'			=> 'database',
 			'connection'	=> 'sqlite:' . $this->storagePath . 'database/default.sqlite',
-		)
+		),
+		
+		'cache' => true,
 	)
 );
 

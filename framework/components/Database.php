@@ -2,6 +2,7 @@
 
 namespace Opiner\Component;
 use Opiner\Exception;
+use PDO;
 
 /**
  * Component respresenting connection do database
@@ -29,7 +30,7 @@ class Database extends \Opiner\Component {
 		
 		try {
 
-			$this->connection = new \PDO(
+			$this->connection = new PDO(
 					$this->fetchConfig('connection',	'mysql:localhost'),
 					$this->fetchConfig('username',		null),
 					$this->fetchConfig('password',		null),

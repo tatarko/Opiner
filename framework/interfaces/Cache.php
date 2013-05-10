@@ -75,12 +75,18 @@ interface Cache {
 	 * @return bool
 	 */
 	public function flush();
-	
+
 	/**
 	 * Connect to cache mechanism (or check something)
+	 * @param mixed[] $settings Stack of settings (given by app configuration)
 	 * @return bool
 	 */
-	public function connect();
+	public function connect($settings);
+
+	/**
+	 * Disconnect from cache mechanism
+	 */
+	public function disconnect();
 }
 
 ?>

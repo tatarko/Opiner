@@ -83,7 +83,7 @@ class Opiner {
 
 		if(static::$application) {
 			
-			return $this->application;
+			return static::$application;
 		}
 		else {
 			
@@ -125,7 +125,7 @@ class Opiner {
 		}
 		elseif(static::$application) {
 			
-			return static::$application->$name;
+			return static::$application->__get($name);
 		}
 	}
 	

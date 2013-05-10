@@ -53,7 +53,7 @@ class Object {
 
 		if(method_exists($this, 'set' . ucfirst($name))) {
 
-			$this->{'set' . ucfirst($name)}($value);
+			call_user_func_array([$this, 'set' . ucfirst($name)], []);
 		}
 		elseif(in_array($name, $this->_publicProperties)) {
 
@@ -78,7 +78,7 @@ class Object {
 
 		if(method_exists($this, 'get' . ucfirst($name))) {
 
-			return $this->{'get' . ucfirst($name)}();
+			return call_user_func_array([$this, 'get' . ucfirst($name)], []);
 		}
 		elseif(in_array($name, $this->_publicProperties)) {
 

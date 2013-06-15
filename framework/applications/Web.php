@@ -1,7 +1,8 @@
 <?php
 
 namespace Opiner\Application;
-use Opiner\Opiner;
+use Opiner\Application;
+use Opiner\Traits\EventCollector;
 
 /**
  * Basic web application
@@ -12,11 +13,16 @@ use Opiner\Opiner;
  * @license GPL 3
  * @since 0.1
  */
-class Web extends \Opiner\Application {
+class Web extends Application {
+
+	use EventCollector;
 
 	public function run() {
 
-		$this->getComponentByType(Opiner::getClassByAlias('component.router'), self::MISSING_COMPONENT_THROW);
+		$this->registerEvent('hello', function() {
+			echo 'Hello World!';
+		});
+		$this->invokeEvent('hello');
 	}
 }
 ?>

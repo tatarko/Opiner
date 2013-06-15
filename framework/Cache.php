@@ -1,6 +1,7 @@
 <?php
 
 namespace Opiner;
+use Opiner\Interfaces\Cache as ICache;
 
 /**
  * Basic methods for cache systems
@@ -12,7 +13,7 @@ namespace Opiner;
  * @since 0.1
  * @abstract
  */
-abstract class Cache extends Object implements \Opiner\Interfaces\Cache {
+abstract class Cache extends Object implements ICache {
 
 	/**
 	 * @var bool Compress data

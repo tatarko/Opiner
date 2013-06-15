@@ -21,7 +21,7 @@ abstract class Component extends Object implements \Opiner\Interfaces\Component 
 	/**
 	 * @var mixed[] Array of components settings
 	 */
-	protected $settings = array();
+	protected $settings = [];
 
 	/**
 	 * Basic initialization

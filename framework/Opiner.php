@@ -170,7 +170,7 @@ class Opiner {
 	 */
 	public static function getPathOfAlias($alias, $type = self::PATH_ALIAS_ALL) {
 
-		$return		= array();
+		$return		= [];
 		$alias		= str_replace('.', '\\', $alias);
 		$fragments	= array_filter(explode('\\', $alias));
 
@@ -183,7 +183,7 @@ class Opiner {
 
 			$var = strtolower($var);
 
-			if(!in_array($var, ['opiner', 'interfaces'])) {
+			if(!in_array($var, ['opiner', 'interfaces', 'traits'])) {
 
 				$var .= substr($var, -1) == 'y' ? substr($var, -1) . 'ies' : 's';
 			}
@@ -261,4 +261,12 @@ spl_autoload_register(function($class) {
 		require_once $filename;
 	}
 });
+
+set_exception_handler(function(\Exception $e){
+
+	ob_clean();
+	echo $e;
+});
+
+ob_start();
 ?>

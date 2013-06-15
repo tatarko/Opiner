@@ -1,4 +1,5 @@
 <?php
 require_once dirname(__DIR__) . '/framework/Opiner.php';
-Opiner\Opiner::createWebApplication();
+
+Opiner\Opiner::createWebApplication()->run();
 ?>

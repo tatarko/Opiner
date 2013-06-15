@@ -40,7 +40,7 @@ class Database extends \Opiner\Component {
 		catch(PDOException $e) {
 
 			$this->isInitialized = false;
-			throw new Exception('Could not connect to database', 121, $e);
+			throw new Exception('Could not connect to database', 109, $e);
 		}
 	}
 
@@ -57,7 +57,7 @@ class Database extends \Opiner\Component {
 
 		if(!method_exists($this->connection, $name)) {
 
-			throw new Exception('Compoment does not contain method "' . $name . '"', 122);
+			throw new Exception('Compoment does not contain method "' . $name . '"', 110);
 		}
 
 		return call_user_func_array([$this->connection, $name], $arguments);

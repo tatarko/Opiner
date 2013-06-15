@@ -1,19 +1,19 @@
 <?php
 
-return array(
+return [
 
 	'title'		=> 'Opiner Framework',
 	
-	'components' => array(
+	'components' => [
 		
-		'db' => array(
+		'db' => [
 		
 			'class'			=> 'database',
 			'connection'	=> 'sqlite:' . $this->storagePath . 'database/default.sqlite',
-		),
+		],
 		
 		'cache' => true,
-	)
-);
+	]
+];
 
 ?>

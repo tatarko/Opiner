@@ -36,12 +36,12 @@ class Cache extends \Opiner\Component implements ICache {
 		if(!$this->cache instanceof $interface) {
 
 			$this->isInitialized = false;
-			throw new Exception('Given class name is not valid instance of Cache interface', 123);
+			throw new Exception('Given class name is not valid instance of Cache interface', 106);
 		}
 		elseif(!$this->cache->connect($this->settings)) {
 
 			$this->isInitialized = false;
-			throw new Exception('Could not connect to Cache mechanism', 124);
+			throw new Exception('Could not connect to Cache mechanism', 107);
 		}
 	}
 
@@ -112,7 +112,7 @@ class Cache extends \Opiner\Component implements ICache {
 
 		if(!$this->set($key, $value)) {
 
-			throw new Exception('Unable to store value to cache');
+			throw new Exception('Unable to store value to cache', 108);
 		}
 	}
 

@@ -111,7 +111,7 @@ abstract class Application extends Object {
 
 			if(!$component instanceof IComponent) {
 
-				$this->throwError('"' . $realClassName . '" is not an instance of Component', 101);
+				throw new Exception('"' . $realClassName . '" is not an instance of Component', 101);
 				continue;
 			}
 
@@ -121,6 +121,11 @@ abstract class Application extends Object {
 		}
 	}
 
+	/**
+	 * Extending object getter for getting application components
+	 * @param string $name
+	 * @return mixed
+	 */
 	public function __get($name) {
 
 		if(key_exists($name, $this->components)) {
@@ -130,46 +135,6 @@ abstract class Application extends Object {
 		else {
 
 			parent::__get($name);
-		}
-	}
-
-	/**
-	 * Reporting error to user
-	 * 
-	 * If application has been already initiated,
-	 * an exception will be thrown. Otherwise error
-	 * wil be triggered.
-	 * 
-	 * @param string $message
-	 * @param int $code
-	 * @throws Exception
-	 */
-	public function throwError($message, $code = 100) {
-
-		if($this->isInitialized) {
-
-			throw new Exception($message, $code);
-		}
-		else {
-
-			switch(subtr($code, 0, 1)) {
-
-				case 2:
-					trigger_error($message, E_USER_WARNING);
-					break;
-
-				case 3:
-					trigger_error($message, E_USER_NOTICE);
-					break;
-
-				case 4:
-					trigger_error($message, E_USER_DEPRECATED);
-					break;
-
-				default:
-					trigger_error($message, E_USER_ERROR);
-					break;
-			}
 		}
 	}
 
@@ -202,7 +167,7 @@ abstract class Application extends Object {
 				break;
 
 			case self::MISSING_COMPONENT_THROW:
-				$this->throwError('Application does not have component of type "' . $name . '"');
+				throw new Exception('Application does not have component of type "' . $name . '"', 111);
 				break;
 		}
 	}
@@ -237,7 +202,7 @@ abstract class Application extends Object {
 		}
 		else {
 
-			$this->throwError('Storage path is not valid directory', 211);
+			throw new Exception('Storage path is not valid directory', 103);
 		}
 	}
 

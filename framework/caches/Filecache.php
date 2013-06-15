@@ -19,7 +19,7 @@ class Filecache extends Cache {
 	/**
 	 * Level of compression for variables
 	 */
-	const GZCOMPRESS_LEVEL = 5;
+	const GZCOMPRESS_LEVEL = 3;
 
 	/**
 	 * Filename of file containing meta data and indexes of cached values
@@ -85,7 +85,7 @@ class Filecache extends Cache {
 
 		if(!is_dir($this->storageFolder) || !is_writable($this->storageFolder)) {
 
-			throw new Exception('Given cache path is not valid or script is not allowed to write into it', 125);
+			throw new Exception('Given cache path is not valid or script is not allowed to write into it', 104);
 			return false;
 		}
 
@@ -215,7 +215,7 @@ class Filecache extends Cache {
 
 		if(!$this->canCache($value)) {
 
-			throw new Exception('Unable to store variable to cache', 201);
+			throw new Exception('Unable to store variable to cache', 105);
 		}
 
 		$value = serialize($value);
@@ -272,7 +272,6 @@ class Filecache extends Cache {
 
 		$parsedValue	= $this->parseValue($value);
 		$meta			= [
-			'created'	=> time(),
 			'expire'	=> time() + $expire
 		];
 

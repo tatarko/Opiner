@@ -9,7 +9,7 @@ namespace Opiner;
  */
 function getPublicProperties($obj) {
 
-	return is_object($obj) ? array_keys(get_object_vars($obj)) : array();
+	return is_object($obj) ? array_keys(get_object_vars($obj)) : [];
 }
 
 /**

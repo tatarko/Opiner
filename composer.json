@@ -1,0 +1,26 @@
+{
+	"name":			"opiner/framework",
+	"description":	"Lightweight php framework for rapid web creating",
+	"version":		"0.1",
+	"keywords":		["opiner", "php", "framework", "lightweight", "open source"],
+	"homepage":		"https://github.com/tatarko/Opiner",
+	"time":			"2013-06-16",
+	"license":		"GPL-3.0+",
+	"authors": [
+		{
+			"name":		"Tomáš Tatarko",
+			"email":	"tomas@tatarko.sk",
+			"homepage":	"http://tatarko.sk/",
+			"role":		"Developer"
+		}
+	],
+	"support": {
+		"email":	"tomas@tatarko.sk",
+		"issues":	"https://github.com/tatarko/Opiner/issues",
+		"source":	"https://github.com/tatarko/Opiner"
+	},
+	"require": {
+		"php": ">=5.4.0"
+	}
+
+}

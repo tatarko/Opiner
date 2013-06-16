@@ -1,13 +1,12 @@
 <?php
 
 namespace Opiner\Traits;
-use Opiner\Interfaces\Event as Event;
-use Opiner\EventCollector as EventCollectorClass;
-use Opiner\Event\CallableEvent;
+use Opiner\Interfaces\Event as IEvent;
 use Opiner\Exception;
+use Opiner\Exception\Event as EventException;
 
 /**
- * Description of EventCollector
+ * Traits for creating, managing and executing events
  *
  * @author Tomas Tatarko <tomas@tatarko.sk>
  * @link https://github.com/tatarko/Opiner
@@ -18,65 +17,56 @@ use Opiner\Exception;
 trait EventCollector {
 
 	/**
-	 * @var \Opiner\EventCollector 
+	 * @var \Opiner\Interfaces\Event[eventName][]
 	 */
-	protected $_eventCollector;
-
-	/**
-	 * Creates instance of event collector
-	 */
-	protected function _loadEventCollector() {
-
-		if(!$this->_eventCollector instanceof EventCollectorClass) {
-
-			$this->_eventCollector = new EventCollectorClass($this);
-		}
-		
-		return $this->_eventCollector;
-	}
+	protected $_events = [];
 
 	/**
 	 * Registers new event for specific action
-	 * @param string $type
-	 * @param \Opiner\Interfaces\Event $event
+	 * @param string $eventName Specific name of action (event)
+	 * @param \Opiner\Interfaces\Event $event Instance of \Opiner\Interfaces\Event or callable variable
 	 */
-	public function registerEvent($type, $event) {
+	public function addEvent($eventName, $event) {
 
-		if(!is_string($type)) {
-
+		if(!is_string($eventName))
 			throw new Exception('Type must me string variable', 112);
-		}
 
-		$this->_loadEventCollector();
+		$eventName = strtolower($eventName);
 
-		if($event instanceof Event) {
-
-			$this->_eventCollector->add($type, $this->_eventCollector);
-		}
-		elseif(is_callable($event)) {
-
-			$this->_eventCollector->add($type, new CallableEvent($event));
-		}
-		else {
-
-			throw new Exception('Not valid event', 113);
-		}
+		if($event instanceof IEvent || is_callable($event))
+			$this->_events[$eventName] = $event;
+			else throw new Exception('Not valid event', 113);
 	}
 
 	/**
-	 * Run events asociated to requested action
+	 * Execute all actions assigned to event
 	 * @param string $type
 	 * @return boolean
 	 */
-	protected function invokeEvent($type) {
+	protected function invokeEvent($eventName) {
 
-		if(!is_string($type)) {
-
+		if(!is_string($eventName))
 			throw new Exception('Type must me string variable', 112);
+
+		$eventName = strtolower($eventName);
+
+		if(!isset($this->_events[$eventName]) || empty($this->_events[$eventName]))
+			return true;
+
+		try {
+
+			foreach($this->events[$eventName] as $event) {
+
+				if($event instanceof IEvent)
+					$event->run($this, $eventName);
+					else call_user_func_array ($event, [$this, $eventName]);
+			}
+
+			return true;
 		}
+		catch(EventException $e) {
 
-		$this->_loadEventCollector();
-
-		return $this->_eventCollector->run($type);
+			return false;
+		}
 	}
 }

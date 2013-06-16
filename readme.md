@@ -12,6 +12,7 @@ Done:
 - Basic components interfacing
 - Database component extending PDO class
 - Cache mechanism and component
+- Trait for using events in class
 
 To do:
 

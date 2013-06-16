@@ -27,11 +27,6 @@ function getPublicProperties($obj) {
 class Object {
 
 	/**
-	 * @var mixed[] Stack of values that can be changed publicly
-	 */
-	protected $stack = [];
-
-	/**
 	 * @var string[] List of public properties
 	 */
 	protected $_publicProperties = [];
@@ -45,10 +40,9 @@ class Object {
 	public function __construct() {
 
 		$this->_publicProperties = getPublicProperties($this);
-
 		return $this;
 	}
-	
+
 	/**
 	 * Setting variable of object
 	 * @param string $name
@@ -56,22 +50,11 @@ class Object {
 	 */
 	public function __set($name, $value) {
 
-		if(method_exists($this, 'set' . ucfirst($name))) {
-
+		if(method_exists($this, 'set' . ucfirst($name)))
 			call_user_func_array([$this, 'set' . ucfirst($name)], []);
-		}
-		elseif(in_array($name, $this->_publicProperties)) {
-
+		elseif(in_array($name, $this->_publicProperties))
 			$this->$name = $value;
-		}
-		elseif(in_array($name, $this->stack)) {
-
-			$this->stack[$name]	= $value;
-		}
-		else {
-
-			trigger_error('Property "' . $name . '" is not defined', E_USER_WARNING);
-		}
+			else throw new Exception('Property "' . $name . '" is not defined', 116);
 	}
 
 	/**
@@ -81,22 +64,11 @@ class Object {
 	 */
 	public function __get($name) {
 
-		if(method_exists($this, 'get' . ucfirst($name))) {
-
+		if(method_exists($this, 'get' . ucfirst($name)))
 			return call_user_func_array([$this, 'get' . ucfirst($name)], []);
-		}
-		elseif(in_array($name, $this->_publicProperties)) {
-
+		elseif(in_array($name, $this->_publicProperties))
 			return $this->$name;
-		}
-		elseif(in_array($name, $this->stack)) {
-
-			return $this->stack[$name];
-		}
-		else {
-
-			trigger_error('Property "' . $name . '" is not defined', E_USER_WARNING);
-		}
+			else throw new Exception('Property "' . $name . '" is not defined', 116);
 	}
 
 	/**
@@ -106,16 +78,10 @@ class Object {
 	 */
 	public function __isset($name) {
 
-		if(method_exists($this, 'get' . ucfirst($name))
-		|| in_array($name, $this->_publicProperties)
-		|| in_array($name, $this->stack)) {
-
+		if(in_array($name, $this->_publicProperties)
+		|| (method_exists($this, 'get' . ucfirst($name)) && method_exists($this, 'set' . ucfirst($name))))
 			return true;
-		}
-		else {
-
-			return false;
-		}
+			else return false;
 	}
 }
 ?>

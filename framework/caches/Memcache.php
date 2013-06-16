@@ -1,7 +1,7 @@
 <?php
 
 namespace Opiner\Cache;
-use Opiner\Cache;
+use Opiner\Traits\Cache as CacheTrait;
 
 /**
  * @author Tomas Tatarko <tomas@tatarko.sk>
@@ -12,7 +12,9 @@ use Opiner\Cache;
  * 
  * @property int $compressed Correct flag for setting/getting values from/to memcache
  */
-class Memcache extends Cache {
+class Memcache extends \MemCache implements CacheInterface {
+
+	use CacheTrait;
 
 	/**
 	 * Default hostname of server to connect
@@ -23,11 +25,6 @@ class Memcache extends Cache {
 	 * Default port to connect
 	 */
 	const DEFAULT_PORT = 11211;
-
-	/**
-	 * @var \Memcache Memcache connection 
-	 */
-	protected $memcache;
 
 	/**
 	 * Set new variable (do nothing on existence)

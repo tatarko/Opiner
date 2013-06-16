@@ -16,7 +16,12 @@ class Exception extends _Exception {
 
 	public function __toString() {
 		
-		return sprintf('<p><strong>[%d] %s</strong> on line %d in file %s', $this->getCode(), $this->getMessage(), $this->getLine(), $this->getFile());
+		return sprintf('<p><strong>[Error %d] %s</strong> on line %d in file %s',
+				$this->getCode(),
+				$this->getMessage(),
+				$this->getLine(),
+				$this->getFile()
+		);
 	}
 }
 

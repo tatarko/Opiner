@@ -1,7 +1,6 @@
 <?php
 
-namespace Opiner;
-use Opiner\Interfaces\Cache as ICache;
+namespace Opiner\Traits;
 
 /**
  * Basic methods for cache systems
@@ -11,9 +10,8 @@ use Opiner\Interfaces\Cache as ICache;
  * @copyright Copyright &copy; 2012-2013 Tomas Tatarko
  * @license GPL 3
  * @since 0.1
- * @abstract
  */
-abstract class Cache extends Object implements ICache {
+trait Cache {
 
 	/**
 	 * @var bool Compress data

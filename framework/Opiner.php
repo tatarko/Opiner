@@ -71,24 +71,19 @@ class Opiner {
 	const PATH_ALIAS_ALL = 3;
 
 	/**
-	 * @var Opiner\Interfaces\Application Currently active application
+	 * @var \Opiner\Interfaces\Application Currently active application
 	 */
 	public static $application;
 
 	/**
 	 * Getter for current active application
-	 * @return Opiner\Interfaces\Application Current initatied application
+	 * @return \Opiner\Interfaces\Application Current initatied application
 	 */
 	public static function app() {
 
-		if(static::$application) {
-			
+		if(static::$application)
 			return static::$application;
-		}
-		else {
-			
-			trigger_error('Application has not been initiated yet', E_USER_ERROR);
-		}
+			else throw new Exception('Application has not been initiated yet', 100);
 	}
 
 	/**
@@ -107,24 +102,21 @@ class Opiner {
 	public static function __callStatic($name, $params) {
 
 		if(strtolower(substr($name, 0, 6)) == 'create') {
-			
-			$name		= ucfirst(str_replace(['create', 'application'], '', strtolower($name)));
+
+			$name		= ucfirst(str_replace(['create', 'application', 'app'], '', strtolower($name)));
 			$className	= static::getClassByAlias('application', $name);
 			$configFile	= isset($params[1]) ? $params[1] : null;
-			
+
 			if(class_exists($className)) {
-				
+
 				static::$application = new $className($configFile);
 				static::$application->init();
 				return static::$application;
 			}
-			else {
-				
-				trigger_error('Unable to find "' . $name . '" application type', E_USER_ERROR);
-			}
+			else throw new Exception('Unable to find "' . $name . '" application type', 115);
 		}
 		elseif(static::$application) {
-			
+
 			return static::$application->__get($name);
 		}
 	}
@@ -136,32 +128,26 @@ class Opiner {
 	 */
 	public static function getClassByAlias($alias) {
 
-		foreach(func_get_args() as $param) {
-
-			foreach(explode('.', $param) as $fragment) {
-
+		foreach(func_get_args() as $param)
+			foreach(explode('.', $param) as $fragment)
 				$fragments[] = $fragment;
-			}
-		}
 
 		array_walk($fragments, function(&$data){
 
 			$data = ucfirst($data);
 		});
-		
+
 		if($fragments[0] != 'Opiner') {
 
-			$secondary = array_merge(['Opiner'], $fragments);
+			$secondary = array_merge(NAME, $fragments);
 
-			if(!class_exists('\\' . implode('\\', $fragments))) {
-
+			if(!class_exists('\\' . implode('\\', $fragments)))
 				return '\\' . implode('\\', $secondary);
-			}
 		}
 
 		return '\\' . implode('\\', $fragments);
 	}
-	
+
 	/**
 	 * Get real path according to given alias
 	 * @param string $alias Alias of class/directory
@@ -174,19 +160,15 @@ class Opiner {
 		$alias		= str_replace('.', '\\', $alias);
 		$fragments	= array_filter(explode('\\', $alias));
 
-		if(empty($fragments)) {
-
+		if(empty($fragments))
 			return null;
-		}
 
 		array_walk($fragments, function(&$var){
 
 			$var = strtolower($var);
 
-			if(!in_array($var, ['opiner', 'interfaces', 'traits'])) {
-
+			if(!in_array($var, ['opiner', 'interfaces', 'traits']))
 				$var .= substr($var, -1) == 'y' ? substr($var, -1) . 'ies' : 's';
-			}
 		});
 
 		$inFramework = $fragments[0] == 'opiner';
@@ -217,11 +199,9 @@ class Opiner {
 			$return['file'][$lastKey]	= ucfirst($return['file'][$lastKey]);
 			$return['file'][$lastKey]	= substr($return['file'][$lastKey], 0, substr($return['file'][$lastKey], -3) == 'ies' ? -3 : -1);
 			$return['file']				= implode(DIRECTORY_SEPARATOR, $return['file']) . CLASS_FILE_SUFFIX;
-			
-			if(static::$application && !$inFramework && !file_exists($return['file'])) {
-				
+
+			if(static::$application && !$inFramework && !file_exists($return['file']))
 				$return['file'] = static::getPathOfAlias(implode('.', array_merge(['opiner'], $fragments)), static::PATH_ALIAS_FILE);
-			}
 		}
 
 		// Unsetting path to directory if it is not requested
@@ -238,7 +218,7 @@ class Opiner {
 			default: return $return; break;
 		}
 	}
-	
+
 	/**
 	 * Getting path to framework files
 	 * @return string
@@ -256,17 +236,22 @@ spl_autoload_register(function($class) {
 
 	$filename = Opiner::getPathOfAlias($class, Opiner::PATH_ALIAS_FILE);
 
-	if(file_exists($filename)) {
-
+	if(file_exists($filename))
 		require_once $filename;
-	}
 });
 
+/**
+ * Setting default exception handler
+ */
 set_exception_handler(function(\Exception $e){
 
 	ob_clean();
 	echo $e;
 });
 
+/**
+ * Starting output buffer
+ */
 ob_start();
+
 ?>

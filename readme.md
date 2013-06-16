@@ -19,7 +19,8 @@ To do:
 - Database query builder
 - Active Record interfacing
 - Active Record relations
-- Basic Router interfacing and component
-- Basic Rendering mechanism
-- Formulars mechanism
-- ActiveForm
+- Url Managment
+- Router component
+- Rendering mechanism (Twig template engine or custom built)
+- Basic Controller
+- Form Builder + ActiveForm
